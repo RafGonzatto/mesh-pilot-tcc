@@ -1,0 +1,19 @@
+{
+  "name": "my-ia-library",
+  "version": "1.0.0",
+  "description": "Biblioteca para pathfinding (NavMesh) e IA (FSM, Behavior Trees) em JavaScript",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0"
+  },
+  "keywords": [
+    "IA",
+    "NavMesh",
+    "FSM",
+    "Behavior Trees",
+    "Pathfinding",
+    "JavaScript"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT"
+}
