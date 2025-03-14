@@ -1,31 +1,36 @@
-// src/pathfinding/Graph.js
-
-export default class Graph {
+/**
+ * @module Graph
+ * Representa um grafo simples com nós e listas de adjacência.
+ */
+export class Graph {
   /**
-   * @param {Array} nodes - Ex: [{ id: 0, polygon: {...}}, ...]
-   * @param {Array} edges - Ex: [[0,1], [1,2]] (pares de índices)
+   * @param {Array<{id:number, polygon:any}>} nodes 
+   * @param {Array<[number, number, number]>} edges [nodeA, nodeB, peso]
    */
-  constructor(nodes = [], edges = []) {
+  constructor(nodes=[], edges=[]) {
     this.nodes = nodes;
     this.adjList = new Map();
-
-    // Inicializar adjacency list
-    nodes.forEach((node) => {
+    for (const node of nodes) {
       this.adjList.set(node.id, []);
-    });
-
-    // Popular adjacency list
-    edges.forEach(([id1, id2]) => {
-      this.adjList.get(id1).push(id2);
-      this.adjList.get(id2).push(id1);
-    });
+    }
+    for (const [a, b, w] of edges) {
+      this._addEdge(a, b, w);
+      this._addEdge(b, a, w);
+    }
   }
 
-  getNeighbors(nodeId) {
-    return this.adjList.get(nodeId);
+  _addEdge(a, b, w=1) {
+    if (!this.adjList.has(a)) {
+      this.adjList.set(a, []);
+    }
+    this.adjList.get(a).push({ nodeId: b, peso: w });
   }
 
-  getNodeById(id) {
-    return this.nodes.find((n) => n.id === id);
+  getAdjacencias(nodeId) {
+    return this.adjList.get(nodeId) || [];
+  }
+
+  getNode(nodeId) {
+    return this.nodes.find(n => n.id === nodeId);
   }
 }
