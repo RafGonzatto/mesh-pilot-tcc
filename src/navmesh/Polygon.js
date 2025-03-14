@@ -19,7 +19,8 @@ export class Polygon {
 
   getBoundingBox() {
     if (this._bboxCache) return this._bboxCache;
-    let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+    let xmin = Infinity, xmax = -Infinity;
+    let ymin = Infinity, ymax = -Infinity;
     for (const {x, y} of this.vertices) {
       if (x < xmin) xmin = x;
       if (x > xmax) xmax = x;
@@ -33,10 +34,11 @@ export class Polygon {
   getEdges() {
     if (this._edgesCache) return this._edgesCache;
     this._edgesCache = [];
-    for (let i=0; i<this.vertices.length; i++){
+    const vs = this.vertices;
+    for (let i=0; i<vs.length; i++){
       this._edgesCache.push({
-        start: this.vertices[i],
-        end: this.vertices[(i+1) % this.vertices.length]
+        start: vs[i],
+        end: vs[(i+1) % vs.length]
       });
     }
     return this._edgesCache;
@@ -45,9 +47,7 @@ export class Polygon {
   getCenter() {
     if (this._centerCache) return this._centerCache;
     let sx=0, sy=0;
-    for (const {x,y} of this.vertices) {
-      sx += x; sy += y;
-    }
+    for (const {x,y} of this.vertices) { sx+=x; sy+=y; }
     const n = this.vertices.length;
     this._centerCache = { x: sx/n, y: sy/n };
     return this._centerCache;
@@ -70,7 +70,7 @@ export class Polygon {
       const xi = this.vertices[i].x, yi = this.vertices[i].y;
       const xj = this.vertices[j].x, yj = this.vertices[j].y;
       const intersect = ((yi>point.y)!=(yj>point.y)) &&
-                        (point.x < (xj - xi)*(point.y-yi)/(yj-yi) + xi);
+                        (point.x < ((xj - xi)*(point.y-yi)/(yj-yi) + xi));
       if (intersect) inside = !inside;
     }
     return inside;
