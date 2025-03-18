@@ -229,12 +229,39 @@ export class Pathfinder {
 
     return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
   }
+  static _dfs(cfg, startNode, endNode) {
+    const stack = [startNode.id];
+    const visited = new Set([startNode.id]);
+    const cameFrom = new Map();
+    let iterations = 0;
+    let currentId = startNode.id;
 
+    while (stack.length > 0 && iterations++ < cfg.maxIterations) {
+      currentId = stack.pop();
+      if (currentId === endNode.id) {
+        return this._reconstructPath(cameFrom, endNode.id);
+      }
+      const currentNode = cfg.graph.getNode(currentId);
+
+      for (const edge of cfg.graph.getAdjacencias(currentId)) {
+        if (!visited.has(edge.nodeId) && cfg.validator(edge, currentNode)) {
+          visited.add(edge.nodeId);
+          cameFrom.set(edge.nodeId, currentId);
+          stack.push(edge.nodeId);
+        }
+      }
+    }
+
+    // Se não achou o endNode:
+    return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
+  }
   static _dijkstra(cfg, startNode, endNode) {
     const distances = new Map();
     const prev = new Map();
     const queue = new PriorityQueue();
     let iterations = 0;
+    let foundEnd = false;
+    let currentId = startNode.id;
 
     cfg.graph.nodes.forEach((node) => {
       distances.set(node.id, Infinity);
@@ -245,10 +272,13 @@ export class Pathfinder {
     queue.enqueue(startNode.id, 0);
 
     while (!queue.isEmpty() && iterations++ < cfg.maxIterations) {
-      const currentId = queue.dequeue();
+      currentId = queue.dequeue();
       const currentNode = cfg.graph.getNode(currentId);
 
-      if (currentId === endNode.id) break;
+      if (currentId === endNode.id) {
+        foundEnd = true;
+        break;
+      }
 
       for (const edge of cfg.graph.getAdjacencias(currentId)) {
         if (!cfg.validator(edge, currentNode)) continue;
@@ -262,7 +292,17 @@ export class Pathfinder {
       }
     }
 
-    return this._reconstructPath(prev, endNode.id);
+    if (foundEnd) {
+      // Caminho completo
+      return this._reconstructPath(prev, endNode.id);
+    } else {
+      // Caminho parcial
+      if (cfg.partialPath) {
+        return this._reconstructPath(prev, currentId);
+      } else {
+        return [];
+      }
+    }
   }
 
   static _bfs(cfg, startNode, endNode) {
@@ -305,22 +345,41 @@ export class Pathfinder {
   }
 
   static _postProcessPath(rawPath, cfg) {
-    const pathNodes = rawPath.map((id) => cfg.graph.getNode(id));
+    // 1) Filtra os IDs inexistentes no grafo
+    const validPath = [];
+    for (const id of rawPath) {
+      const node = cfg.graph.getNode(id);
+      if (!node) {
+        // Se o ID não existe no grafo, interrompa ou simplesmente não inclua.
+        // Aqui, interrompemos, ficando com o caminho parcial até esse ponto:
+        break;
+      }
+      validPath.push(id);
+    }
+
+    // 2) Converte IDs válidos em nós
+    const pathNodes = validPath.map((id) => cfg.graph.getNode(id));
 
     const result = {
-      path: rawPath,
+      // Guarda só os IDs válidos
+      path: validPath,
+      // Obtém o centro de cada nó válido
       points: pathNodes.map((n) => n.polygon.getCenter()),
       distance: 0,
+      // 'complete' será true se o último ID for o nó final
       complete:
-        rawPath.length > 0 && rawPath[rawPath.length - 1] === cfg.endNode.id,
+        validPath.length > 0 &&
+        validPath[validPath.length - 1] === cfg.endNode.id,
       iterations: 0,
       error: null,
     };
 
+    // 3) Se quiser, faça suavização
     if (cfg.smoothPath) {
       result.points = this._smoothPath(result.points, cfg);
     }
 
+    // 4) Calcula distância
     result.distance = this._calculatePathDistance(result.points);
     return result;
   }

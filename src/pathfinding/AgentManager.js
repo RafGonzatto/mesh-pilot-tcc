@@ -82,11 +82,12 @@ export class AgentManager {
       );
 
       const filteredEdges = [];
+      // Recupera os custos por camada que você passou ao criar o AgentProfile
       const terrainCosts = profile.terrainCosts || {};
+
       this.navMesh.graph.adjList.forEach((edges, nodeId) => {
         edges.forEach((edge) => {
           if (this._isEdgeTraversable(edge, profile)) {
-            // Obter os polígonos conectados
             const polygonA = this.navMesh.graph.getNode(nodeId).polygon;
             const polygonB = this.navMesh.graph.getNode(edge.nodeId).polygon;
             const costA =
@@ -164,6 +165,7 @@ export class AgentProfile {
    * @param {Set<string>} config.allowedLayers - Camadas permitidas
    * @param {number} config.stepHeight - Altura máxima de degrau
    * @param {number} config.jumpHeight - Altura máxima de salto
+   * @param {Object} config.terrainCosts - Objeto mapeando layer -> custo
    */
   constructor({
     radius = 1,
@@ -172,6 +174,8 @@ export class AgentProfile {
     allowedLayers = new Set(["default"]),
     stepHeight = 0.5,
     jumpHeight = 0,
+    // <-- Adicione terrainCosts no objeto de configuração do construtor
+    terrainCosts = {},
   }) {
     this.radius = radius;
     this.minPathWidth = minPathWidth;
@@ -179,6 +183,10 @@ export class AgentProfile {
     this.allowedLayers = allowedLayers;
     this.stepHeight = stepHeight;
     this.jumpHeight = jumpHeight;
+
+    // Guarde a propriedade terrainCosts no AgentProfile
+    this.terrainCosts = terrainCosts;
+
     this._validate();
   }
 

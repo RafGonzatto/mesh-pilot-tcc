@@ -114,11 +114,10 @@
     </style>
   </head>
   <body>
-    <!-- Imagens ocultas para os agentes -->
+    <!-- Imagens ocultas para agentes e terrenos -->
     <img id="humanImage" src="../../static/human.png" style="display: none" />
     <img id="carImage" src="../../static/car.png" style="display: none" />
     <img id="boatImage" src="../../static/boat.png" style="display: none" />
-    <!-- Imagens ocultas para os terrenos -->
     <img id="groundImage" src="../../static/ground.png" style="display: none" />
     <img id="waterImage" src="../../static/water.png" style="display: none" />
     <img id="roadImage" src="../../static/road.png" style="display: none" />
@@ -137,6 +136,8 @@
       <select id="pathfindingMethod">
         <option value="A*">A*</option>
         <option value="BFS">BFS</option>
+        <option value="Dijkstra">Dijkstra</option>
+        <option value="DFS">DFS</option>
       </select>
       <h4>🤖 Agentes:</h4>
       <div id="agentList"></div>
@@ -209,7 +210,6 @@
       import { Pathfinder } from "../../src/pathfinding/Pathfinder.js";
       import { Polygon } from "../../src/navmesh/Polygon.js";
 
-      // Aguarda todas as imagens de terreno e agentes serem carregadas
       function preloadImages(ids) {
         return new Promise((resolve) => {
           let count = 0;
@@ -227,7 +227,6 @@
       }
 
       window.addEventListener("load", async () => {
-        // Adicione todos os IDs de imagem aqui
         await preloadImages([
           "groundImage",
           "waterImage",
@@ -237,7 +236,6 @@
           "carImage",
           "boatImage",
         ]);
-        // Só então iniciamos o jogo
         const game = new Game();
         window.game = game;
         window.toggleDebug = () => game.toggleDebug();
@@ -252,7 +250,6 @@
           this.debugCtx = this.debugCanvas.getContext("2d");
           this.paused = false;
           this.selectedAgentIndex = 0;
-
           this.setupCanvases();
           this.initNavMesh();
           this.setupEventListeners();
@@ -260,9 +257,25 @@
           this.gameLoop();
         }
 
+        // Método que gera um grafo customizado para cada agente:
+        _createAgentGraph(baseGraph, terrainCosts) {
+          const cloned = baseGraph.clone();
+          cloned.adjList.forEach((edges, nodeId) => {
+            edges.forEach((edge) => {
+              const polyA = cloned.getNode(nodeId).polygon;
+              const polyB = cloned.getNode(edge.nodeId).polygon;
+              const costA = terrainCosts[polyA.layer] ?? 1;
+              const costB = terrainCosts[polyB.layer] ?? 1;
+              const multiplier = (costA + costB) / 2;
+              edge.peso *= multiplier;
+            });
+          });
+          return cloned;
+        }
+
         setupCanvases() {
-          const width = window.innerWidth;
-          const height = window.innerHeight;
+          const width = window.innerWidth,
+            height = window.innerHeight;
           [this.canvas, this.debugCanvas].forEach((c) => {
             c.width = width;
             c.height = height;
@@ -270,23 +283,21 @@
         }
 
         initGameWorld() {
-          // Se necessário, inicialize elementos adicionais do mundo
+          /* Inicializações adicionais se necessárias */
         }
 
         initNavMesh() {
           this.navMesh = new NavMesh(true);
           this.debug = new DebugVisualizer(this.debugCtx, this.navMesh);
 
-          // Criar ambiente
           this.createLayers();
           this.createWorldGeometry();
           this.setupDynamicObstacles();
-          console.log("Poligonos apos add:", this.navMesh.polygons);
+          console.log("Polígonos apos add:", this.navMesh.polygons);
 
           this.navMesh.buildGraphConsideringObstacles();
-
-          // Inicializar agentes
           this.agents = [];
+
           this.createAgent("human", { x: 50, y: 50 });
           this.createAgent("car", { x: 300, y: 300 });
           this.createAgent("boat", { x: 500, y: 100 });
@@ -321,57 +332,109 @@
           const width = window.innerWidth;
           const height = window.innerHeight;
 
-          // Terreno (ground): cobre toda a tela.
-          const ground = new Polygon(
+          const cellW = width / 3;
+          const cellH = height / 3;
+
+          // Linha superior
+          const p1 = new Polygon(
             [
               { x: 0, y: 0 },
-              { x: width, y: 0 },
-              { x: width, y: height },
-              { x: 0, y: height },
+              { x: cellW, y: 0 },
+              { x: cellW, y: cellH },
+              { x: 0, y: cellH },
             ],
             { layer: "ground" }
           );
 
-          // Rio (water): faixa vertical na parte esquerda.
-          const river = new Polygon(
+          const p2 = new Polygon(
             [
-              { x: width * 0.15, y: 0 },
-              { x: width * 0.35, y: 0 },
-              { x: width * 0.35, y: height },
-              { x: width * 0.15, y: height },
+              { x: cellW, y: 0 },
+              { x: cellW * 2, y: 0 },
+              { x: cellW * 2, y: cellH },
+              { x: cellW, y: cellH },
             ],
             { layer: "water" }
           );
 
-          // Estrada (road): faixa horizontal na parte inferior.
-          const road = new Polygon(
+          const p3 = new Polygon(
             [
-              { x: 0, y: height * 0.75 },
-              { x: width, y: height * 0.75 },
-              { x: width, y: height * 0.85 },
-              { x: 0, y: height * 0.85 },
+              { x: cellW * 2, y: 0 },
+              { x: cellW * 3, y: 0 },
+              { x: cellW * 3, y: cellH },
+              { x: cellW * 2, y: cellH },
             ],
             { layer: "road" }
           );
 
-          // Ponte (bridge): pequena área que cruza o rio.
-          const bridge = new Polygon(
+          // Linha do meio
+          const p4 = new Polygon(
             [
-              { x: width * 0.25, y: height * 0.4 },
-              { x: width * 0.3, y: height * 0.4 },
-              { x: width * 0.3, y: height * 0.6 },
-              { x: width * 0.25, y: height * 0.6 },
+              { x: 0, y: cellH },
+              { x: cellW, y: cellH },
+              { x: cellW, y: cellH * 2 },
+              { x: 0, y: cellH * 2 },
             ],
             { layer: "bridge" }
           );
 
-          [ground, river, road, bridge].forEach((p) =>
-            this.navMesh.addPolygon(p)
+          const p5 = new Polygon(
+            [
+              { x: cellW, y: cellH },
+              { x: cellW * 2, y: cellH },
+              { x: cellW * 2, y: cellH * 2 },
+              { x: cellW, y: cellH * 2 },
+            ],
+            { layer: "ground" }
+          );
+
+          const p6 = new Polygon(
+            [
+              { x: cellW * 2, y: cellH },
+              { x: cellW * 3, y: cellH },
+              { x: cellW * 3, y: cellH * 2 },
+              { x: cellW * 2, y: cellH * 2 },
+            ],
+            { layer: "water" }
+          );
+
+          // Linha inferior
+          const p7 = new Polygon(
+            [
+              { x: 0, y: cellH * 2 },
+              { x: cellW, y: cellH * 2 },
+              { x: cellW, y: cellH * 3 },
+              { x: 0, y: cellH * 3 },
+            ],
+            { layer: "road" }
+          );
+
+          const p8 = new Polygon(
+            [
+              { x: cellW, y: cellH * 2 },
+              { x: cellW * 2, y: cellH * 2 },
+              { x: cellW * 2, y: cellH * 3 },
+              { x: cellW, y: cellH * 3 },
+            ],
+            { layer: "bridge" }
+          );
+
+          const p9 = new Polygon(
+            [
+              { x: cellW * 2, y: cellH * 2 },
+              { x: cellW * 3, y: cellH * 2 },
+              { x: cellW * 3, y: cellH * 3 },
+              { x: cellW * 2, y: cellH * 3 },
+            ],
+            { layer: "ground" }
+          );
+
+          [p1, p2, p3, p4, p5, p6, p7, p8, p9].forEach((poly) =>
+            this.navMesh.addPolygon(poly)
           );
         }
 
         setupDynamicObstacles() {
-          const car = new Polygon(
+          const obstacle = new Polygon(
             [
               { x: 250, y: 50 },
               { x: 270, y: 50 },
@@ -380,41 +443,55 @@
             ],
             { layer: "road" }
           );
-          car.id = this.navMesh.dynamicObstacleManager.addObstacle(car);
-          this.movingObstacle = car;
+          obstacle.id =
+            this.navMesh.dynamicObstacleManager.addObstacle(obstacle);
+          this.movingObstacle = obstacle;
         }
 
         createAgent(type, position) {
           const radius = type === "car" ? 10 : 5;
           let terrainCosts, allowedLayers;
+
           if (type === "boat") {
-            terrainCosts = { water: 1, ground: 200, road: 100, bridge: 100 };
-            allowedLayers = new Set(["water", "ground", "bridge"]); // Permite navegar em água
+            terrainCosts = { water: 1, ground: 1000, road: 100, bridge: 50 };
+            allowedLayers = new Set(["water", "ground", "road", "bridge"]);
           } else if (type === "car") {
-            terrainCosts = { water: 200, road: 1, bridge: 50, ground: 200 };
-            allowedLayers = new Set(["road", "bridge"]);
-          } else if (type === "human") {
-            terrainCosts = { ground: 1, road: 50, bridge: 50, water: 200 };
+            terrainCosts = { water: 1000, road: 1, bridge: 50, ground: 1000 };
             allowedLayers = new Set(["ground", "road", "bridge"]);
+          } else {
+            terrainCosts = { ground: 1, road: 50, bridge: 100, water: 200 };
+            allowedLayers = new Set(["ground", "road", "bridge", "water"]);
           }
+
+          const profile = new AgentProfile({
+            allowedLayers,
+            radius,
+            minPathWidth: radius * 2,
+            terrainCosts,
+          });
+
+          // Gera o grafo ajustado para este agente
+          const agentGraph = this._createAgentGraph(
+            this.navMesh.graph,
+            terrainCosts
+          );
+
           const agent = {
             type,
             position,
             target: null,
             path: [],
-            profile: new AgentProfile({
-              allowedLayers,
-              radius,
-              minPathWidth: radius * 2,
-              terrainCosts, // novo mapeamento
-            }),
+            profile,
+            // Guarda o grafo customizado
+            graph: agentGraph,
+
             update() {
               if (this.path.length) {
                 const next = this.path[0];
                 const dx = next.x - this.position.x;
                 const dy = next.y - this.position.y;
                 const dist = Math.hypot(dx, dy);
-                const step = 2; // distância de movimento por frame
+                const step = 2;
                 if (dist <= step) {
                   this.position.x = next.x;
                   this.position.y = next.y;
@@ -469,6 +546,7 @@
               }
             },
           };
+
           this.agents.push(agent);
           this.updateUI();
         }
@@ -477,21 +555,20 @@
           if (!this.paused) {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // Desenha cada polígono usando a imagem (se carregada) ou cor
             this.navMesh.polygons.forEach((poly) => {
               const layerConfig = this.navMesh.layerSystem.layerFilters.get(
                 poly.layer
               );
               if (layerConfig && layerConfig.imageId) {
                 const img = document.getElementById(layerConfig.imageId);
-                if (img && img.complete) {
-                  this.ctx.fillStyle = this.ctx.createPattern(img, "repeat");
-                } else {
-                  this.ctx.fillStyle = layerConfig.color;
-                }
+                this.ctx.fillStyle =
+                  img && img.complete
+                    ? this.ctx.createPattern(img, "repeat")
+                    : layerConfig.color;
               } else {
                 this.ctx.fillStyle = layerConfig ? layerConfig.color : "#000";
               }
+
               this.ctx.beginPath();
               poly.vertices.forEach((v, i) => {
                 if (i === 0) this.ctx.moveTo(v.x, v.y);
@@ -501,14 +578,14 @@
               this.ctx.fill();
             });
 
-            // Atualiza obstáculo móvel
+            // Obstáculo móvel
             this.movingObstacle.vertices.forEach((v) => (v.x += 0.5));
             this.navMesh.dynamicObstacleManager.updateObstacle(
               this.movingObstacle.id,
               this.movingObstacle
             );
 
-            // Atualiza e desenha agentes
+            // Agentes
             this.agents.forEach((agent) => {
               agent.update();
               agent.draw(this.ctx);
@@ -529,12 +606,13 @@
           agentList.innerHTML = this.agents
             .map(
               (agent, i) => `
-                <div class="agentSelector ${
-                  i === this.selectedAgentIndex ? "selected" : ""
-                }" data-index="${i}">
-                  ${agent.type} #${i + 1}
-                </div>
-              `
+              <div class="agentSelector ${
+                i === this.selectedAgentIndex ? "selected" : ""
+              }"
+                   data-index="${i}">
+                ${agent.type} #${i + 1}
+              </div>
+            `
             )
             .join("");
           agentList.querySelectorAll(".agentSelector").forEach((el) => {
@@ -551,21 +629,30 @@
 
         handleClick(e) {
           const rect = this.canvas.getBoundingClientRect();
-          const target = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-          };
+          const target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
           const agent = this.agents[this.selectedAgentIndex];
+
+          // Usa o grafo do agente, não o this.navMesh.graph
           const pathObj = Pathfinder.findPath({
-            graph: this.navMesh.graph,
+            graph: agent.graph,
             start: agent.position,
             end: target,
             method: document.getElementById("pathfindingMethod").value,
+            partialPath: true,
           });
-          const path = pathObj.points;
-          const last = path[path.length - 1];
-          if (last.x !== target.x || last.y !== target.y) path.push(target);
+
+          let path = pathObj.points;
+          if (path.length === 0) {
+            path = [target];
+          } else {
+            const last = path[path.length - 1];
+            if (last.x !== target.x || last.y !== target.y) {
+              path.push(target);
+            }
+          }
+
           agent.path = path;
+          agent.target = target;
         }
 
         setupEventListeners() {
