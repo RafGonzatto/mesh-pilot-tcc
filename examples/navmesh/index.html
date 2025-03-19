@@ -1,91 +1,14 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>NavMesh Demo Game</title>
     <style>
-      #debugCanvas {
-        pointer-events: none;
-      }
+      /* ------ Layout Básico ------ */
       body {
         margin: 0;
         overflow: hidden;
         font-family: Arial, sans-serif;
-      }
-      #gameStatus {
-        position: fixed;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 8px 20px;
-        border-radius: 5px;
-        z-index: 1001;
-        font-size: 0.9em;
-      }
-      #controls {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        background: rgba(25, 25, 25, 0.95);
-        padding: 15px;
-        color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        width: 260px;
-      }
-      #howToPlay {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(25, 25, 25, 0.95);
-        color: #fff;
-        padding: 15px;
-        border-radius: 8px;
-        max-width: 300px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-      }
-      #layerLegend {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
-        background: rgba(25, 25, 25, 0.95);
-        color: #fff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-      }
-      .agentSelector {
-        cursor: pointer;
-        padding: 8px;
-        margin: 5px 0;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-        transition: all 0.2s ease;
-      }
-      .agentSelector:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-      .agentSelector.selected {
-        background: #4caf50;
-        font-weight: bold;
-      }
-      button {
-        background: #4caf50;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        margin: 5px 0;
-        transition: all 0.3s ease;
-      }
-      button:hover {
-        background: #45a049;
-        transform: translateY(-1px);
       }
       canvas {
         position: fixed;
@@ -93,109 +16,171 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        z-index: 0;
       }
       #gameCanvas {
         background: #1a1a1a
           url('data:image/svg+xml;utf8,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" fill="%23222222"/><path d="M40 0 L0 0 0 40" fill="none" stroke="%232a2a2a" stroke-width="1"/></svg>');
       }
-      .legend-item {
-        display: flex;
-        align-items: center;
-        margin: 10px 0;
-        padding: 5px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 4px;
+      #debugCanvas {
+        pointer-events: none;
       }
-      .tooltip {
-        border-bottom: 1px dotted rgba(255, 255, 255, 0.5);
-        cursor: help;
+
+      /* ------ Contêineres fixos ------ */
+      #controls,
+      #howToPlay,
+      #layerLegend,
+      #gameStatus {
+        position: fixed;
+        padding: 10px;
+        background: rgba(25, 25, 25, 0.95);
+        color: #fff;
+        border-radius: 5px;
+        z-index: 1000;
+      }
+      #controls {
+        top: 20px;
+        left: 20px;
+        width: 220px;
+      }
+      #howToPlay {
+        top: 20px;
+        right: 20px;
+        max-width: 280px;
+      }
+      #layerLegend {
+        bottom: 20px;
+        left: 20px;
+        min-width: 150px;
+      }
+      #gameStatus {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1001;
+        font-size: 0.9em;
+      }
+
+      /* ------ Modal de Debug ------ */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .modal-content {
+        background: #fff;
+        margin: 10% auto;
+        padding: 20px;
+        width: 80%;
+        max-width: 600px;
+        color: #000;
+        border-radius: 5px;
+      }
+      .close {
+        float: right;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      #debugModal {
+        bottom: 20px;
+        right: 20px;
+        width: 300px;
+        max-height: 300px;
+        background: rgba(255, 255, 255, 0.95);
+        overflow: auto;
+        border-radius: 5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        display: none;
+        position: fixed;
+      }
+
+      /* ------ Botões e Seletores ------ */
+      button,
+      .agentSelector {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: none;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      button:hover,
+      .agentSelector:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .agentSelector.selected {
+        background: #4caf50;
+        font-weight: bold;
+      }
+      select {
+        width: 100%;
+        margin: 5px 0;
+      }
+
+      /* ------ Ocultamos as imagens carregadas ------ */
+      #humanImage,
+      #carImage,
+      #boatImage,
+      #groundImage,
+      #waterImage,
+      #roadImage,
+      #bridgeImage {
+        display: none;
       }
     </style>
   </head>
-  <body>
-    <!-- Imagens ocultas para agentes e terrenos -->
-    <img id="humanImage" src="../../static/human.png" style="display: none" />
-    <img id="carImage" src="../../static/car.png" style="display: none" />
-    <img id="boatImage" src="../../static/boat.png" style="display: none" />
-    <img id="groundImage" src="../../static/ground.png" style="display: none" />
-    <img id="waterImage" src="../../static/water.png" style="display: none" />
-    <img id="roadImage" src="../../static/road.png" style="display: none" />
-    <img id="bridgeImage" src="../../static/bridge.png" style="display: none" />
 
+  <body>
+    <!-- Imagens dos agentes e terrenos -->
+    <img id="humanImage" src="../../static/human.png" />
+    <img id="carImage" src="../../static/car.png" />
+    <img id="boatImage" src="../../static/boat.png" />
+    <img id="groundImage" src="../../static/ground.png" />
+    <img id="waterImage" src="../../static/water.png" />
+    <img id="roadImage" src="../../static/road.png" />
+    <img id="bridgeImage" src="../../static/bridge.png" />
+
+    <!-- Status e Painéis -->
     <div id="gameStatus">
-      <span id="debugStatus">Debug: Ativo</span> |
+      <span id="debugStatus">Debug: Inativo</span> |
       <span id="pauseStatus">Jogo: Executando</span>
     </div>
 
     <div id="controls">
-      <h3>🕹️ Controles</h3>
-      <button onclick="toggleDebug()">🔍 Toggle Debug</button>
-      <button onclick="togglePause()">⏯️ Toggle Pause</button>
-      <h4>🧭 Algoritmo:</h4>
+      <h4>Controles</h4>
+      <button onclick="toggleDebug()">Toggle Debug</button>
+      <button onclick="openDebugModal()">Open Debug Modal</button>
+      <button onclick="togglePause()">Toggle Pause</button>
+      <h4>Algoritmo</h4>
       <select id="pathfindingMethod">
         <option value="A*">A*</option>
         <option value="BFS">BFS</option>
         <option value="Dijkstra">Dijkstra</option>
         <option value="DFS">DFS</option>
       </select>
-      <h4>🤖 Agentes:</h4>
+      <h4>Agentes</h4>
       <div id="agentList"></div>
-      <h4>🔧 Debug:</h4>
-      <label
-        ><input type="checkbox" checked data-layer="polygons" />
-        Polígonos</label
-      >
-      <label><input type="checkbox" data-layer="edges" /> Conexões</label>
-      <label><input type="checkbox" data-layer="obstacles" /> Obstáculos</label>
     </div>
 
     <div id="howToPlay">
-      <h3>🎮 Como Jogar:</h3>
-      <p>1. Clique em um agente na lista à esquerda</p>
-      <p>2. Clique no mapa para definir destino</p>
-      <p>3. Use os controles para experimentar:</p>
-      <ul>
-        <li>🔍 Visualizar sistema de navegação</li>
-        <li>⏯️ Pausar/Continuar</li>
-        <li>🧭 Mudar algoritmo de busca</li>
-      </ul>
+      <h4>Como Jogar</h4>
+      <ol>
+        <li>Selecione um agente</li>
+        <li>Clique no mapa para definir destino</li>
+        <li>Use os botões para mudar algoritmo, pausar ou ativar debug</li>
+      </ol>
     </div>
 
     <div id="layerLegend">
-      <h3>🌈 Legenda:</h3>
-      <div class="legend-item">
-        <img
-          src="../../static/ground.png"
-          alt="Terreno Normal"
-          style="width: 20px; height: 20px; margin-right: 10px"
-        />
-        <span>Terreno Normal (Custo: 1.0)</span>
-      </div>
-      <div class="legend-item">
-        <img
-          src="../../static/water.png"
-          alt="Água"
-          style="width: 20px; height: 20px; margin-right: 10px"
-        />
-        <span>Água (Barcos) (Custo: 3.0)</span>
-      </div>
-      <div class="legend-item">
-        <img
-          src="../../static/road.png"
-          alt="Estrada"
-          style="width: 20px; height: 20px; margin-right: 10px"
-        />
-        <span>Estrada (Carros) (Custo: 0.8)</span>
-      </div>
-      <div class="legend-item">
-        <img
-          src="../../static/bridge.png"
-          alt="Ponte"
-          style="width: 20px; height: 20px; margin-right: 10px"
-        />
-        <span>Ponte (Pedestres) (Custo: 1.2)</span>
-      </div>
+      <h4>Custos do Agente</h4>
+      <!-- Conteúdo dinâmico conforme seleção do agente -->
     </div>
 
     <div id="gameContainer">
@@ -203,6 +188,17 @@
       <canvas id="debugCanvas"></canvas>
     </div>
 
+    <!-- Modal de Debug -->
+    <div id="debugModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeDebugModal()">&times;</span>
+        <pre id="debugLog"></pre>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------
+         Script principal (módulo e lógica)
+    ------------------------------------------- -->
     <script type="module">
       import { NavMesh } from "../../src/navmesh/NavMesh.js";
       import { DebugVisualizer } from "../../src/pathfinding/DebugVisualizer.js";
@@ -210,22 +206,354 @@
       import { Pathfinder } from "../../src/pathfinding/Pathfinder.js";
       import { Polygon } from "../../src/navmesh/Polygon.js";
 
+      // Pré-carrega imagens para evitar flicker
       function preloadImages(ids) {
         return new Promise((resolve) => {
-          let count = 0;
+          let loaded = 0;
           ids.forEach((id) => {
             const img = document.getElementById(id);
             if (img.complete) {
-              if (++count === ids.length) resolve();
+              if (++loaded === ids.length) resolve();
             } else {
               img.onload = () => {
-                if (++count === ids.length) resolve();
+                if (++loaded === ids.length) resolve();
               };
             }
           });
         });
       }
 
+      // Classe principal do jogo
+      class Game {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.debugCanvas = document.getElementById("debugCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.debugCtx = this.debugCanvas.getContext("2d");
+          this.paused = false;
+          this.selectedAgentIndex = 0;
+
+          this.setupCanvases();
+          this.initNavMesh();
+          this.setupEvents();
+          this.startGameLoop();
+        }
+
+        setupCanvases() {
+          const w = window.innerWidth,
+            h = window.innerHeight;
+          [this.canvas, this.debugCanvas].forEach((c) => {
+            c.width = w;
+            c.height = h;
+          });
+        }
+
+        initNavMesh() {
+          this.navMesh = new NavMesh(true);
+          this.debug = new DebugVisualizer(this.debugCtx, this.navMesh);
+
+          // Registra 4 camadas básicas
+          const ls = this.navMesh.layerSystem;
+          ls.registerLayer("ground", {
+            color: "#4a4a4a",
+            imageId: "groundImage",
+          });
+          ls.registerLayer("water", {
+            color: "#006994",
+            imageId: "waterImage",
+          });
+          ls.registerLayer("road", { color: "#505050", imageId: "roadImage" });
+          ls.registerLayer("bridge", {
+            color: "#8b4513",
+            imageId: "bridgeImage",
+          });
+
+          // Cria grid 6x6
+          this.createGridGeometry(6, 6);
+          this.navMesh.buildGraphConsideringObstacles();
+
+          // Array de agentes
+          this.agents = [];
+          this.createAgent("human", { x: 50, y: 50 });
+          this.createAgent("car", { x: 300, y: 300 });
+          this.createAgent("boat", { x: 500, y: 100 });
+
+          // Debug visual ativo
+          this.debug.toggle(true);
+          this.updateUI();
+        }
+
+        /**
+         * Cria uma grade (cols x rows), cada célula é um Polygon com layer aleatória.
+         */
+        createGridGeometry(cols, rows) {
+          const w = this.canvas.width,
+            h = this.canvas.height;
+          const cellW = w / cols,
+            cellH = h / rows;
+          const layers = ["ground", "water", "road", "bridge"];
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              let x1 = c * cellW,
+                y1 = r * cellH,
+                x2 = x1 + cellW,
+                y2 = y1 + cellH;
+              let layer = layers[Math.floor(Math.random() * layers.length)];
+              let poly = new Polygon(
+                [
+                  { x: x1, y: y1 },
+                  { x: x2, y: y1 },
+                  { x: x2, y: y2 },
+                  { x: x1, y: y2 },
+                ],
+                { layer }
+              );
+              this.navMesh.addPolygon(poly);
+            }
+          }
+        }
+
+        /**
+         * Cria um agente com custos específicos por layer e gera um grafo customizado.
+         */
+        createAgent(type, position) {
+          let terrainCosts,
+            allowedLayers = new Set(["ground", "road", "bridge", "water"]);
+          if (type === "boat")
+            terrainCosts = { water: 1, ground: 1000, road: 100, bridge: 50 };
+          else if (type === "car")
+            terrainCosts = { road: 1, bridge: 50, ground: 1000, water: 1000 };
+          else terrainCosts = { ground: 1, road: 50, bridge: 100, water: 200 }; // humano
+
+          let radius = type === "car" ? 10 : 5;
+          let profile = new AgentProfile({
+            allowedLayers,
+            radius,
+            minPathWidth: radius * 2,
+            terrainCosts,
+          });
+          let agentGraph = this._buildWeightedGraph(terrainCosts);
+          let colorMap = { human: "#0f0", car: "#f00", boat: "#00f" };
+
+          let agent = {
+            type,
+            position,
+            target: null,
+            path: [],
+            profile,
+            graph: agentGraph,
+            markerColor: colorMap[type] || "#fff",
+            update() {
+              if (!this.path.length) return;
+              let nx = this.path[0].x,
+                ny = this.path[0].y;
+              let dx = nx - this.position.x,
+                dy = ny - this.position.y;
+              let dist = Math.hypot(dx, dy),
+                step = 2;
+              if (dist <= step) {
+                this.position.x = nx;
+                this.position.y = ny;
+                this.path.shift();
+                if (!this.path.length) this.target = null;
+              } else {
+                this.position.x += (dx / dist) * step;
+                this.position.y += (dy / dist) * step;
+              }
+            },
+            draw(ctx) {
+              let imgId =
+                type === "human"
+                  ? "humanImage"
+                  : type === "car"
+                  ? "carImage"
+                  : "boatImage";
+              let img = document.getElementById(imgId);
+              let [w, h] =
+                type === "car"
+                  ? [40, 20]
+                  : type === "boat"
+                  ? [50, 25]
+                  : [30, 30];
+              if (img) {
+                ctx.drawImage(
+                  img,
+                  this.position.x - w / 2,
+                  this.position.y - h / 2,
+                  w,
+                  h
+                );
+              } else {
+                ctx.fillStyle = this.markerColor;
+                ctx.beginPath();
+                ctx.arc(
+                  this.position.x,
+                  this.position.y,
+                  w / 2,
+                  0,
+                  Math.PI * 2
+                );
+                ctx.fill();
+              }
+              // destino
+              if (this.target) {
+                ctx.beginPath();
+                ctx.strokeStyle = this.markerColor;
+                ctx.arc(this.target.x, this.target.y, 8, 0, 2 * Math.PI);
+                ctx.stroke();
+              }
+            },
+          };
+
+          this.agents.push(agent);
+          this.updateUI(); // atualiza lista e legenda
+        }
+
+        /** Clona o grafo-base e ajusta pesos de acordo com terrainCosts. */
+        _buildWeightedGraph(terrainCosts) {
+          let base = this.navMesh.graph.clone();
+          base.adjList.forEach((edges, nodeId) => {
+            edges.forEach((edge) => {
+              let A = base.getNode(nodeId).polygon,
+                B = base.getNode(edge.nodeId).polygon;
+              let costA = terrainCosts[A.layer] || 9999;
+              let costB = terrainCosts[B.layer] || 9999;
+              edge.peso *= (costA + costB) / 2;
+            });
+          });
+          return base;
+        }
+
+        /**
+         * Loop principal do jogo: desenha terrenos e agentes (se não estiver pausado).
+         */
+        startGameLoop() {
+          const loop = () => {
+            if (!this.paused) {
+              this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+              // Desenha cada polígono (terreno)
+              this.navMesh.polygons.forEach((poly) => {
+                let lc = this.navMesh.layerSystem.layerFilters.get(poly.layer);
+                let pat = null;
+                if (lc && lc.imageId) {
+                  let tex = document.getElementById(lc.imageId);
+                  if (tex && tex.complete)
+                    pat = this.ctx.createPattern(tex, "repeat");
+                }
+                this.ctx.fillStyle = pat || (lc ? lc.color : "#000");
+                this.ctx.beginPath();
+                poly.vertices.forEach((v, i) => {
+                  if (i === 0) this.ctx.moveTo(v.x, v.y);
+                  else this.ctx.lineTo(v.x, v.y);
+                });
+                this.ctx.closePath();
+                this.ctx.fill();
+              });
+
+              // Atualiza e desenha agentes
+              this.agents.forEach((agent) => {
+                agent.update();
+                agent.draw(this.ctx);
+              });
+            }
+            requestAnimationFrame(loop);
+          };
+          loop();
+        }
+
+        /** Eventos de redimensionamento e clique para definir destino do agente. */
+        setupEvents() {
+          window.addEventListener("resize", () => this.setupCanvases());
+          this.canvas.addEventListener("click", (e) => {
+            let rect = this.canvas.getBoundingClientRect();
+            let target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            let agent = this.agents[this.selectedAgentIndex];
+            let method = document.getElementById("pathfindingMethod").value;
+            let res = Pathfinder.findPath({
+              graph: agent.graph,
+              start: agent.position,
+              end: target,
+              method,
+              partialPath: true,
+            });
+            if (res.points.length) {
+              // Garante que o último ponto seja o destino exato
+              let last = res.points[res.points.length - 1];
+              if (last.x !== target.x || last.y !== target.y)
+                res.points.push(target);
+              agent.path = res.points;
+            } else {
+              agent.path = [target];
+            }
+            agent.target = target;
+          });
+        }
+
+        /** Atualiza UI: lista de agentes e legenda com custos do agente selecionado. */
+        updateUI() {
+          // Debug/Pause
+          document.getElementById("debugStatus").textContent =
+            "Debug: " + (this.debug.config.enabled ? "Ativo" : "Inativo");
+          document.getElementById("pauseStatus").textContent =
+            "Jogo: " + (this.paused ? "Pausado" : "Executando");
+
+          // Lista de agentes
+          let agentList = document.getElementById("agentList");
+          agentList.innerHTML = this.agents
+            .map(
+              (agent, i) => `
+            <div class="agentSelector ${
+              i === this.selectedAgentIndex ? "selected" : ""
+            }" data-idx="${i}">
+              ${agent.type} #${i + 1}
+            </div>
+          `
+            )
+            .join("");
+          agentList.querySelectorAll(".agentSelector").forEach((el) => {
+            el.addEventListener("click", () => {
+              this.selectedAgentIndex = parseInt(el.dataset.idx);
+              this.updateUI();
+            });
+          });
+
+          // Legenda (custos do agente selecionado)
+          let legend = document.getElementById("layerLegend");
+          let sel = this.agents[this.selectedAgentIndex];
+          legend.innerHTML = `<h4>Custos ${sel.type}</h4>`;
+          Object.entries(sel.profile.terrainCosts).forEach(([layer, cost]) => {
+            legend.innerHTML += `<div>${layer} → ${cost}</div>`;
+          });
+        }
+        openDebugModal() {
+          let modal = document.getElementById("debugModal");
+          let log = document.getElementById("debugLog");
+          log.textContent = JSON.stringify(
+            this.debug.captureDebugData(),
+            null,
+            2
+          );
+          modal.style.display = "block";
+        }
+        // Alterna debug e exibe modal
+        toggleDebug() {
+          this.debug.toggle(!this.debug.config.enabled);
+          document.getElementById("debugStatus").textContent =
+            "Debug: " + (this.debug.config.enabled ? "Ativo" : "Inativo");
+        }
+
+        /** Abre a modal de debug exibindo os logs atuais. */
+
+        // Pausa ou retoma o loop
+        togglePause() {
+          this.paused = !this.paused;
+          document.getElementById("pauseStatus").textContent =
+            "Jogo: " + (this.paused ? "Pausado" : "Executando");
+        }
+      }
+
+      // Inicia tudo após carregar imagens
       window.addEventListener("load", async () => {
         await preloadImages([
           "groundImage",
@@ -240,435 +568,10 @@
         window.game = game;
         window.toggleDebug = () => game.toggleDebug();
         window.togglePause = () => game.togglePause();
+        window.openDebugModal = () => game.openDebugModal();
       });
-
-      class Game {
-        constructor() {
-          this.canvas = document.getElementById("gameCanvas");
-          this.debugCanvas = document.getElementById("debugCanvas");
-          this.ctx = this.canvas.getContext("2d");
-          this.debugCtx = this.debugCanvas.getContext("2d");
-          this.paused = false;
-          this.selectedAgentIndex = 0;
-          this.setupCanvases();
-          this.initNavMesh();
-          this.setupEventListeners();
-          this.initGameWorld();
-          this.gameLoop();
-        }
-
-        // Método que gera um grafo customizado para cada agente:
-        _createAgentGraph(baseGraph, terrainCosts) {
-          const cloned = baseGraph.clone();
-          cloned.adjList.forEach((edges, nodeId) => {
-            edges.forEach((edge) => {
-              const polyA = cloned.getNode(nodeId).polygon;
-              const polyB = cloned.getNode(edge.nodeId).polygon;
-              const costA = terrainCosts[polyA.layer] ?? 1;
-              const costB = terrainCosts[polyB.layer] ?? 1;
-              const multiplier = (costA + costB) / 2;
-              edge.peso *= multiplier;
-            });
-          });
-          return cloned;
-        }
-
-        setupCanvases() {
-          const width = window.innerWidth,
-            height = window.innerHeight;
-          [this.canvas, this.debugCanvas].forEach((c) => {
-            c.width = width;
-            c.height = height;
-          });
-        }
-
-        initGameWorld() {
-          /* Inicializações adicionais se necessárias */
-        }
-
-        initNavMesh() {
-          this.navMesh = new NavMesh(true);
-          this.debug = new DebugVisualizer(this.debugCtx, this.navMesh);
-
-          this.createLayers();
-          this.createWorldGeometry();
-          this.setupDynamicObstacles();
-          console.log("Polígonos apos add:", this.navMesh.polygons);
-
-          this.navMesh.buildGraphConsideringObstacles();
-          this.agents = [];
-
-          this.createAgent("human", { x: 50, y: 50 });
-          this.createAgent("car", { x: 300, y: 300 });
-          this.createAgent("boat", { x: 500, y: 100 });
-
-          this.debug.toggle(true);
-        }
-
-        createLayers() {
-          this.navMesh.layerSystem.registerLayer("ground", {
-            color: "#4a4a4a",
-            traversalCost: 300.0,
-            imageId: "groundImage",
-          });
-          this.navMesh.layerSystem.registerLayer("water", {
-            color: "#006994",
-            traversalCost: 150.0,
-            imageId: "waterImage",
-          });
-          this.navMesh.layerSystem.registerLayer("road", {
-            color: "#505050",
-            traversalCost: 50,
-            imageId: "roadImage",
-          });
-          this.navMesh.layerSystem.registerLayer("bridge", {
-            color: "#8b4513",
-            traversalCost: 1,
-            imageId: "bridgeImage",
-          });
-        }
-
-        createWorldGeometry() {
-          const width = window.innerWidth;
-          const height = window.innerHeight;
-
-          const cellW = width / 3;
-          const cellH = height / 3;
-
-          // Linha superior
-          const p1 = new Polygon(
-            [
-              { x: 0, y: 0 },
-              { x: cellW, y: 0 },
-              { x: cellW, y: cellH },
-              { x: 0, y: cellH },
-            ],
-            { layer: "ground" }
-          );
-
-          const p2 = new Polygon(
-            [
-              { x: cellW, y: 0 },
-              { x: cellW * 2, y: 0 },
-              { x: cellW * 2, y: cellH },
-              { x: cellW, y: cellH },
-            ],
-            { layer: "water" }
-          );
-
-          const p3 = new Polygon(
-            [
-              { x: cellW * 2, y: 0 },
-              { x: cellW * 3, y: 0 },
-              { x: cellW * 3, y: cellH },
-              { x: cellW * 2, y: cellH },
-            ],
-            { layer: "road" }
-          );
-
-          // Linha do meio
-          const p4 = new Polygon(
-            [
-              { x: 0, y: cellH },
-              { x: cellW, y: cellH },
-              { x: cellW, y: cellH * 2 },
-              { x: 0, y: cellH * 2 },
-            ],
-            { layer: "bridge" }
-          );
-
-          const p5 = new Polygon(
-            [
-              { x: cellW, y: cellH },
-              { x: cellW * 2, y: cellH },
-              { x: cellW * 2, y: cellH * 2 },
-              { x: cellW, y: cellH * 2 },
-            ],
-            { layer: "ground" }
-          );
-
-          const p6 = new Polygon(
-            [
-              { x: cellW * 2, y: cellH },
-              { x: cellW * 3, y: cellH },
-              { x: cellW * 3, y: cellH * 2 },
-              { x: cellW * 2, y: cellH * 2 },
-            ],
-            { layer: "water" }
-          );
-
-          // Linha inferior
-          const p7 = new Polygon(
-            [
-              { x: 0, y: cellH * 2 },
-              { x: cellW, y: cellH * 2 },
-              { x: cellW, y: cellH * 3 },
-              { x: 0, y: cellH * 3 },
-            ],
-            { layer: "road" }
-          );
-
-          const p8 = new Polygon(
-            [
-              { x: cellW, y: cellH * 2 },
-              { x: cellW * 2, y: cellH * 2 },
-              { x: cellW * 2, y: cellH * 3 },
-              { x: cellW, y: cellH * 3 },
-            ],
-            { layer: "bridge" }
-          );
-
-          const p9 = new Polygon(
-            [
-              { x: cellW * 2, y: cellH * 2 },
-              { x: cellW * 3, y: cellH * 2 },
-              { x: cellW * 3, y: cellH * 3 },
-              { x: cellW * 2, y: cellH * 3 },
-            ],
-            { layer: "ground" }
-          );
-
-          [p1, p2, p3, p4, p5, p6, p7, p8, p9].forEach((poly) =>
-            this.navMesh.addPolygon(poly)
-          );
-        }
-
-        setupDynamicObstacles() {
-          const obstacle = new Polygon(
-            [
-              { x: 250, y: 50 },
-              { x: 270, y: 50 },
-              { x: 270, y: 70 },
-              { x: 250, y: 70 },
-            ],
-            { layer: "road" }
-          );
-          obstacle.id =
-            this.navMesh.dynamicObstacleManager.addObstacle(obstacle);
-          this.movingObstacle = obstacle;
-        }
-
-        createAgent(type, position) {
-          const radius = type === "car" ? 10 : 5;
-          let terrainCosts, allowedLayers;
-
-          if (type === "boat") {
-            terrainCosts = { water: 1, ground: 1000, road: 100, bridge: 50 };
-            allowedLayers = new Set(["water", "ground", "road", "bridge"]);
-          } else if (type === "car") {
-            terrainCosts = { water: 1000, road: 1, bridge: 50, ground: 1000 };
-            allowedLayers = new Set(["ground", "road", "bridge"]);
-          } else {
-            terrainCosts = { ground: 1, road: 50, bridge: 100, water: 200 };
-            allowedLayers = new Set(["ground", "road", "bridge", "water"]);
-          }
-
-          const profile = new AgentProfile({
-            allowedLayers,
-            radius,
-            minPathWidth: radius * 2,
-            terrainCosts,
-          });
-
-          // Gera o grafo ajustado para este agente
-          const agentGraph = this._createAgentGraph(
-            this.navMesh.graph,
-            terrainCosts
-          );
-
-          const agent = {
-            type,
-            position,
-            target: null,
-            path: [],
-            profile,
-            // Guarda o grafo customizado
-            graph: agentGraph,
-
-            update() {
-              if (this.path.length) {
-                const next = this.path[0];
-                const dx = next.x - this.position.x;
-                const dy = next.y - this.position.y;
-                const dist = Math.hypot(dx, dy);
-                const step = 2;
-                if (dist <= step) {
-                  this.position.x = next.x;
-                  this.position.y = next.y;
-                  this.path.shift();
-                } else {
-                  this.position.x += (dx / dist) * step;
-                  this.position.y += (dy / dist) * step;
-                }
-              }
-            },
-            draw(ctx) {
-              const sizeMapping = {
-                human: { width: 30, height: 30 },
-                car: { width: 40, height: 20 },
-                boat: { width: 50, height: 25 },
-              };
-              const { width, height } = sizeMapping[this.type] || {
-                width: 30,
-                height: 30,
-              };
-              const img = document.getElementById(
-                this.type === "human"
-                  ? "humanImage"
-                  : this.type === "car"
-                  ? "carImage"
-                  : "boatImage"
-              );
-              if (img) {
-                ctx.drawImage(
-                  img,
-                  this.position.x - width / 2,
-                  this.position.y - height / 2,
-                  width,
-                  height
-                );
-              } else {
-                ctx.fillStyle =
-                  this.type === "human"
-                    ? "#00ff00"
-                    : this.type === "car"
-                    ? "#ff0000"
-                    : "#0000ff";
-                ctx.beginPath();
-                ctx.arc(
-                  this.position.x,
-                  this.position.y,
-                  width / 2,
-                  0,
-                  Math.PI * 2
-                );
-                ctx.fill();
-              }
-            },
-          };
-
-          this.agents.push(agent);
-          this.updateUI();
-        }
-
-        gameLoop() {
-          if (!this.paused) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-            this.navMesh.polygons.forEach((poly) => {
-              const layerConfig = this.navMesh.layerSystem.layerFilters.get(
-                poly.layer
-              );
-              if (layerConfig && layerConfig.imageId) {
-                const img = document.getElementById(layerConfig.imageId);
-                this.ctx.fillStyle =
-                  img && img.complete
-                    ? this.ctx.createPattern(img, "repeat")
-                    : layerConfig.color;
-              } else {
-                this.ctx.fillStyle = layerConfig ? layerConfig.color : "#000";
-              }
-
-              this.ctx.beginPath();
-              poly.vertices.forEach((v, i) => {
-                if (i === 0) this.ctx.moveTo(v.x, v.y);
-                else this.ctx.lineTo(v.x, v.y);
-              });
-              this.ctx.closePath();
-              this.ctx.fill();
-            });
-
-            // Obstáculo móvel
-            this.movingObstacle.vertices.forEach((v) => (v.x += 0.5));
-            this.navMesh.dynamicObstacleManager.updateObstacle(
-              this.movingObstacle.id,
-              this.movingObstacle
-            );
-
-            // Agentes
-            this.agents.forEach((agent) => {
-              agent.update();
-              agent.draw(this.ctx);
-            });
-            this.updateUI();
-          }
-          requestAnimationFrame(() => this.gameLoop());
-        }
-
-        updateUI() {
-          document.getElementById("debugStatus").textContent = `Debug: ${
-            this.debug.config.enabled ? "Ativo" : "Inativo"
-          }`;
-          document.getElementById("pauseStatus").textContent = `Jogo: ${
-            this.paused ? "Pausado" : "Executando"
-          }`;
-          const agentList = document.getElementById("agentList");
-          agentList.innerHTML = this.agents
-            .map(
-              (agent, i) => `
-              <div class="agentSelector ${
-                i === this.selectedAgentIndex ? "selected" : ""
-              }"
-                   data-index="${i}">
-                ${agent.type} #${i + 1}
-              </div>
-            `
-            )
-            .join("");
-          agentList.querySelectorAll(".agentSelector").forEach((el) => {
-            el.addEventListener("click", () => {
-              this.selectAgent(parseInt(el.getAttribute("data-index")));
-            });
-          });
-        }
-
-        selectAgent(index) {
-          this.selectedAgentIndex = index;
-          this.updateUI();
-        }
-
-        handleClick(e) {
-          const rect = this.canvas.getBoundingClientRect();
-          const target = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-          const agent = this.agents[this.selectedAgentIndex];
-
-          // Usa o grafo do agente, não o this.navMesh.graph
-          const pathObj = Pathfinder.findPath({
-            graph: agent.graph,
-            start: agent.position,
-            end: target,
-            method: document.getElementById("pathfindingMethod").value,
-            partialPath: true,
-          });
-
-          let path = pathObj.points;
-          if (path.length === 0) {
-            path = [target];
-          } else {
-            const last = path[path.length - 1];
-            if (last.x !== target.x || last.y !== target.y) {
-              path.push(target);
-            }
-          }
-
-          agent.path = path;
-          agent.target = target;
-        }
-
-        setupEventListeners() {
-          this.canvas.addEventListener("click", (e) => this.handleClick(e));
-        }
-
-        toggleDebug() {
-          this.debug.toggle(!this.debug.config.enabled);
-          this.updateUI();
-        }
-
-        togglePause() {
-          this.paused = !this.paused;
-          this.updateUI();
-        }
-      }
+      window.closeDebugModal = () =>
+        (document.getElementById("debugModal").style.display = "none");
     </script>
   </body>
 </html>
