@@ -219,7 +219,11 @@ export class DebugVisualizer {
   toggle(enabled = true, newConfig = {}) {
     this.config.enabled = enabled;
     if (newConfig) this.updateConfig(newConfig);
-    if (enabled) this.draw();
+    if (enabled) {
+      this.draw();
+    } else {
+      this._clearCanvas();
+    }
   }
 
   /**
