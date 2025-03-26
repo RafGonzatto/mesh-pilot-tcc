@@ -120,17 +120,19 @@ export class Pathfinder {
       for (const edge of cfg.graph.getAdjacencias(currentId)) {
         if (!cfg.validator(edge, currentNode)) continue;
 
-        // custo g = gScore(current) + costFunction
         const tentativeG =
           (gScore.get(currentId) || 0) + cfg.costFunction(edge);
         const neighborId = edge.nodeId;
-        const currentG = gScore.get(neighborId) ?? Infinity;
+        // Verifica se o nó vizinho existe
+        const neighborNode = cfg.graph.getNode(neighborId);
+        if (!neighborNode) continue;
 
+        const currentG = gScore.get(neighborId) ?? Infinity;
         if (tentativeG < currentG) {
           cameFrom.set(neighborId, currentId);
           gScore.set(neighborId, tentativeG);
           const h = cfg.heuristic(
-            cfg.graph.getNode(neighborId).polygon.getCenter(),
+            neighborNode.polygon.getCenter(),
             endNode.polygon.getCenter()
           );
           const f = tentativeG + h;
@@ -143,6 +145,7 @@ export class Pathfinder {
     }
     return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
   }
+
   static _dfs(cfg, startNode, endNode) {
     const stack = [startNode.id];
     const visited = new Set([startNode.id]);

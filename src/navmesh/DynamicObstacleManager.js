@@ -152,18 +152,41 @@ export class DynamicObstacleManager extends EventEmitter {
     const updatedGraph = this.navMesh.graph.clone();
 
     this.blockedEdges.forEach((edgeId) => {
+      // edgeId ~ "nodeId_xStart,yStart_xEnd,yEnd"
       const [nodeId, ...points] = edgeId.split("_");
       const [start, end] = points.map((p) => {
         const [x, y] = p.split(",").map(Number);
         return { x, y };
       });
 
+      // Remove do nodeId
       updatedGraph.adjList.set(
         nodeId,
         updatedGraph.adjList
           .get(nodeId)
           .filter((edge) => !this._edgesEqual(edge, start, end))
       );
+
+      // Agora remover também do vizinho
+      // 1) achar o edge que bate com (start,end)
+      // 2) neighborId está em edge.nodeId
+
+      // Para cada edge que você removeu acima, faça a contrapartida no outro nó
+      // ou use uma lógica similar – por ex:
+      const oldEdges = [...updatedGraph.adjList.get(nodeId)];
+      const removedEdges = oldEdges.filter((ed) =>
+        this._edgesEqual(ed, start, end)
+      );
+      for (let re of removedEdges) {
+        const neighborId = re.nodeId.toString();
+        // remove do neighborId o caminho de volta p/ nodeId
+        updatedGraph.adjList.set(
+          neighborId,
+          updatedGraph.adjList
+            .get(neighborId)
+            .filter((ed2) => ed2.nodeId !== Number(nodeId))
+        );
+      }
     });
 
     this.navMesh.graph = updatedGraph;

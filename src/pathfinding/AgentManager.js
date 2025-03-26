@@ -1,19 +1,41 @@
+import { EventEmitter } from "../navmesh/EventEmitter.js";
+import { Pathfinder } from "../pathfinding/Pathfinder.js";
+import { Graph } from "../pathfinding/Graph.js";
+
 /**
  * @module AgentManager
- * Sistema de gerenciamento de múltiplos agentes com perfis de navegação
+ * Sistema de gerenciamento de múltiplos agentes com perfis de navegação.
+ * Agora estende EventEmitter e escuta eventos do NavMesh para recalcular caminhos.
  */
-export class AgentManager {
+export class AgentManager extends EventEmitter {
   constructor(navMesh) {
+    super();
     this.navMesh = navMesh;
     this.agentProfiles = new Map();
     this.activeAgents = new Map();
     this.cachedGraphs = new Map();
-  }
 
+    this.navMesh.on("graphupdated", (info) => {
+      console.log("[AgentManager] graphupdated event captured:", info);
+      this.cachedGraphs.clear();
+      this.activeAgents.forEach((agent) => {
+        if (agent.target) {
+          console.log("[AgentManager] Recalculating path for agent:", agent.id);
+          this.recalculateAgentPath(agent.id, true);
+          console.log(
+            "[AgentManager] New path for",
+            agent.id,
+            ":",
+            agent.currentPath
+          );
+        }
+      });
+    });
+  }
   /**
-   * Registra um novo perfil de agente
-   * @param {string} profileName - Nome do perfil
-   * @param {AgentProfile} profile - Configurações do agente
+   * Registra um novo perfil de agente.
+   * @param {string} profileName - Nome do perfil.
+   * @param {AgentProfile} profile - Configurações do agente.
    */
   registerProfile(profileName, profile) {
     if (!(profile instanceof AgentProfile)) {
@@ -24,10 +46,10 @@ export class AgentManager {
   }
 
   /**
-   * Cria um novo agente com um perfil específico
-   * @param {string} agentId - ID único do agente
-   * @param {string} profileName - Nome do perfil registrado
-   * @param {Object} initialPosition - Posição inicial {x, y}
+   * Cria um novo agente com um perfil específico.
+   * @param {string} agentId - ID único do agente.
+   * @param {string} profileName - Nome do perfil registrado.
+   * @param {Object} initialPosition - Posição inicial {x, y}.
    */
   createAgent(agentId, profileName, initialPosition) {
     const profile = this.agentProfiles.get(profileName);
@@ -36,10 +58,12 @@ export class AgentManager {
     const agent = {
       id: agentId,
       profile,
-      position: initialPosition,
+      position: { ...initialPosition },
       currentPath: [],
+      target: null,
       active: true,
       graph: this._getAgentGraph(profile),
+      type: profileName, // Adiciona o tipo baseado no nome do perfil
     };
 
     this.activeAgents.set(agentId, agent);
@@ -48,113 +72,129 @@ export class AgentManager {
   }
 
   /**
-   * Atualiza o caminho de um agente
-   * @param {string} agentId - ID do agente
-   * @param {Object} target - Destino {x, y} ou ID do nó
+   * Define destino e recalcula o caminho do agente.
+   * @param {string} agentId - ID do agente.
+   * @param {Object} target - Destino {x, y} ou ID do nó.
+   * @param {boolean} [partial=true] - Se permite caminho parcial.
    */
-  updateAgentPath(agentId, target) {
+  setAgentTarget(agentId, target, partial = true) {
     const agent = this.activeAgents.get(agentId);
-    if (!agent || !agent.active) return;
-
-    const pathResult = Pathfinder.findPath({
-      graph: agent.graph,
-      start: agent.position,
-      end: target,
-      validator: this._createAgentValidator(agent.profile),
-    });
-
-    if (pathResult.path.length > 0) {
-      agent.currentPath = pathResult.points;
-      this.navMesh.emit("pathUpdated", { agentId, path: pathResult });
-    }
+    if (!agent) return;
+    agent.target = { ...target };
+    this.recalculateAgentPath(agentId, partial);
   }
 
   /**
-   * Gera ou recupera grafo específico para o perfil do agente
+   * Recalcula o caminho do agente.
+   */
+  recalculateAgentPath(agentId, partial = true) {
+    const agent = this.activeAgents.get(agentId);
+    if (!agent || !agent.target) return;
+    // Atualiza o grafo do agente com base no estado atual da NavMesh
+    agent.graph = this._getAgentGraph(agent.profile);
+    const result = Pathfinder.findPath({
+      graph: agent.graph,
+      start: agent.position,
+      end: agent.target,
+      partialPath: partial,
+    });
+    agent.currentPath = result.points;
+    this.emit("agentPathUpdated", {
+      agentId,
+      path: agent.currentPath,
+      partial,
+    });
+  }
+
+  /**
+   * Atualiza a posição do agente dado um "step" de movimento.
+   * @param {string} agentId - ID do agente.
+   * @param {number} [step=2] - Distância a mover.
+   */
+  updateAgent(agentId, step = 2) {
+    const agent = this.activeAgents.get(agentId);
+    if (!agent || !agent.currentPath.length) return;
+    const next = agent.currentPath[0];
+    const dx = next.x - agent.position.x;
+    const dy = next.y - agent.position.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= step) {
+      agent.position.x = next.x;
+      agent.position.y = next.y;
+      agent.currentPath.shift();
+      if (!agent.currentPath.length && agent.target) {
+        // agent.position.x = agent.target.x;
+        // agent.position.y = agent.target.y;
+        agent.target = null;
+      }
+    } else {
+      agent.position.x += (dx / dist) * step;
+      agent.position.y += (dy / dist) * step;
+    }
+
+    this.emit("agentUpdated", {
+      agentId,
+      position: { ...agent.position },
+      remainingPath: agent.currentPath,
+    });
+  }
+
+  getAgent(agentId) {
+    return this.activeAgents.get(agentId);
+  }
+
+  /**
+   * Gera ou recupera o grafo específico para o perfil do agente.
    * @private
    */
   _getAgentGraph(profile) {
-    const cacheKey = this._getProfileCacheKey(profile);
-
-    if (!this.cachedGraphs.has(cacheKey)) {
-      const filteredNodes = this.navMesh.graph.nodes.filter((node) =>
-        this._isNodeAccessible(node, profile)
-      );
-
-      const filteredEdges = [];
-      // Recupera os custos por camada que você passou ao criar o AgentProfile
-      const terrainCosts = profile.terrainCosts || {};
-
-      this.navMesh.graph.adjList.forEach((edges, nodeId) => {
-        edges.forEach((edge) => {
-          if (this._isEdgeTraversable(edge, profile)) {
-            const polygonA = this.navMesh.graph.getNode(nodeId).polygon;
-            const polygonB = this.navMesh.graph.getNode(edge.nodeId).polygon;
-            const costA =
-              terrainCosts[polygonA.layer] !== undefined
-                ? terrainCosts[polygonA.layer]
-                : 1;
-            const costB =
-              terrainCosts[polygonB.layer] !== undefined
-                ? terrainCosts[polygonB.layer]
-                : 1;
-            // Calcula o custo efetivo como média dos multiplicadores
-            const multiplier = (costA + costB) / 2;
-            const effectiveCost = edge.peso * multiplier;
-            filteredEdges.push([Number(nodeId), edge.nodeId, effectiveCost]);
-          }
-        });
+    // Debug: ignorar cache para garantir grafo fresco
+    const filteredNodes = this.navMesh.graph.nodes.filter((node) =>
+      this._isNodeAccessible(node, profile)
+    );
+    const filteredEdges = [];
+    const terrainCosts = profile.terrainCosts || {};
+    this.navMesh.graph.adjList.forEach((edges, nodeId) => {
+      edges.forEach((edge) => {
+        if (this._isEdgeTraversable(edge, profile)) {
+          const polygonA = this.navMesh.graph.getNode(nodeId).polygon;
+          const polygonB = this.navMesh.graph.getNode(edge.nodeId).polygon;
+          const costA = terrainCosts[polygonA.layer] ?? 9999;
+          const costB = terrainCosts[polygonB.layer] ?? 9999;
+          const multiplier = (costA + costB) / 2;
+          filteredEdges.push([
+            Number(nodeId),
+            edge.nodeId,
+            edge.peso * multiplier,
+          ]);
+        }
       });
-
-      this.cachedGraphs.set(cacheKey, new Graph(filteredNodes, filteredEdges));
-    }
-
-    return this.cachedGraphs.get(cacheKey);
+    });
+    return new Graph(filteredNodes, filteredEdges);
   }
 
-  /**
-   * Validador de navegação específico para o agente
-   * @private
-   */
-  _createAgentValidator(profile) {
-    return (edge, node) => {
-      const edgeWidth = this._calculateEdgeWidth(edge);
-      const canTraverse =
-        edgeWidth >= profile.minPathWidth &&
-        node.polygon.traversalCost <= profile.maxSlope &&
-        profile.allowedLayers.has(node.polygon.layer);
-
-      return canTraverse;
-    };
+  _isNodeAccessible(node, profile) {
+    return profile.allowedLayers.has(node.polygon.layer);
   }
 
-  /**
-   * Calcula largura efetiva de uma aresta
-   * @private
-   */
-  _calculateEdgeWidth(edge) {
-    // Implementação simplificada - considerar bounding boxes dos polígonos
-    const nodeA = this.navMesh.graph.getNode(edge.a);
-    const nodeB = this.navMesh.graph.getNode(edge.b);
-    return Math.min(nodeA.polygon.getWidth(), nodeB.polygon.getWidth());
+  _isEdgeTraversable(edge, profile) {
+    // Implementação simplificada – pode ser aprimorada para levar em conta minPathWidth, etc.
+    return true;
   }
 
-  /**
-   * Gera chave única para cache de grafos
-   * @private
-   */
   _getProfileCacheKey(profile) {
-    return [
-      profile.minPathWidth,
-      profile.maxSlope,
-      [...profile.allowedLayers].sort().join(","),
-    ].join("|");
+    return JSON.stringify({
+      minPathWidth: profile.minPathWidth,
+      layers: [...profile.allowedLayers].sort(),
+      costs: profile.terrainCosts,
+    });
   }
 }
 
 /**
  * @class AgentProfile
- * Define as características de navegação de um tipo de agente
+ * Define as características de navegação de um tipo de agente.
  */
 export class AgentProfile {
   /**
@@ -174,7 +214,6 @@ export class AgentProfile {
     allowedLayers = new Set(["default"]),
     stepHeight = 0.5,
     jumpHeight = 0,
-    // <-- Adicione terrainCosts no objeto de configuração do construtor
     terrainCosts = {},
   }) {
     this.radius = radius;
@@ -183,10 +222,7 @@ export class AgentProfile {
     this.allowedLayers = allowedLayers;
     this.stepHeight = stepHeight;
     this.jumpHeight = jumpHeight;
-
-    // Guarde a propriedade terrainCosts no AgentProfile
     this.terrainCosts = terrainCosts;
-
     this._validate();
   }
 

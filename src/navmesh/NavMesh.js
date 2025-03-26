@@ -18,6 +18,8 @@ export class NavMesh extends EventEmitter {
     this.layerSystem = new LayerSystem(this);
     // Inicializa o DynamicObstacleManager
     this.enableDynamicObstacles();
+
+    this._agentManager = new AgentManager(this);
   }
 
   /**
@@ -241,6 +243,9 @@ export class NavMesh extends EventEmitter {
   }
 
   createAgentManager() {
-    return new AgentManager(this);
+    return this._agentManager; // antes criava sempre
+  }
+  get agentManager() {
+    return this._agentManager;
   }
 }
