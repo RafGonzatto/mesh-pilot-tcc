@@ -2,9 +2,16 @@ import { Pathfinder } from "./Pathfinder.js";
 
 /**
  * @module DebugVisualizer
- * Sistema de visualização debug para a NavMesh e componentes relacionados
+ * Sistema de visualização para debug da NavMesh e seus componentes.
+ * Permite desenhar polígonos, arestas, obstáculos, caminhos, nós, grid espacial e rótulos.
  */
 export class DebugVisualizer {
+  /**
+   * Cria uma instância do DebugVisualizer.
+   * @param {CanvasRenderingContext2D} ctx - Contexto de desenho do canvas.
+   * @param {NavMesh} navMesh - Instância da NavMesh.
+   * @param {Object} [config={}] - Configurações iniciais de visualização.
+   */
   constructor(ctx, navMesh, config = {}) {
     this.ctx = ctx;
     this.navMesh = navMesh;
@@ -23,19 +30,23 @@ export class DebugVisualizer {
       nodeColor: "#ffffff",
       spatialGridColor: "rgba(200, 200, 200, 0.2)",
       labelColor: "#ffffff",
-      debugEventLog: true, // nova opção para log global
+      debugEventLog: true,
       enabled: true,
       ...config,
     };
 
     this.currentPath = [];
     this.activeObstacles = new Map();
-    this.eventLog = []; // log de eventos para debug
+    this.eventLog = []; // Log para depuração dos eventos
     this._setupEventListeners();
   }
 
+  /**
+   * Configura os listeners para eventos da NavMesh, obstáculos, Pathfinder e agentes.
+   * @private
+   */
   _setupEventListeners() {
-    // NavMesh
+    // Eventos da NavMesh
     this.navMesh.on("polygonadded", (data) => {
       console.log("[DebugVisualizer] polygonadded", data);
       this.eventLog.push({ event: "polygonadded", data });
@@ -56,7 +67,7 @@ export class DebugVisualizer {
       this.eventLog.push({ event: "error", data });
     });
 
-    // Obstáculos dinâmicos
+    // Eventos de obstáculos dinâmicos
     if (this.navMesh.dynamicObstacleManager) {
       this.navMesh.dynamicObstacleManager.on("obstacleadded", (data) => {
         console.log("[DebugVisualizer] obstacleadded", data);
@@ -86,7 +97,7 @@ export class DebugVisualizer {
       this._requestRedraw();
     });
 
-    // Eventos do AgentManager
+    // Eventos do AgentManager (se disponível)
     if (this.navMesh.agentManager) {
       this.navMesh.agentManager.on("agentCreated", (agent) => {
         console.log("[DebugVisualizer] agentCreated", agent);
@@ -102,7 +113,7 @@ export class DebugVisualizer {
       });
     }
 
-    // Global listener
+    // Listener global para eventos, se ativado
     if (this.config.debugEventLog) {
       this.navMesh.addGlobalListener((event) => {
         console.log("[DebugVisualizer] Global event", event);
@@ -111,16 +122,27 @@ export class DebugVisualizer {
     }
   }
 
+  /**
+   * Atualiza a configuração e solicita um redesenho.
+   * @param {Object} newConfig - Novas configurações.
+   */
   updateConfig(newConfig) {
     this.config = { ...this.config, ...newConfig };
     this._requestRedraw();
   }
 
+  /**
+   * Solicita o redesenho do canvas se a visualização estiver habilitada.
+   * @private
+   */
   _requestRedraw() {
     if (!this.config.enabled) return;
     this.draw();
   }
 
+  /**
+   * Realiza o desenho completo da visualização.
+   */
   draw() {
     this._clearCanvas();
     if (this.config.showPolygons) this._drawPolygons();
@@ -132,10 +154,18 @@ export class DebugVisualizer {
     if (this.config.showLabels) this._drawLabels();
   }
 
+  /**
+   * Limpa o canvas.
+   * @private
+   */
   _clearCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
   }
 
+  /**
+   * Desenha os polígonos da NavMesh.
+   * @private
+   */
   _drawPolygons() {
     this.navMesh.polygons.forEach((poly) => {
       this.ctx.fillStyle = this.config.polygonColor;
@@ -148,6 +178,10 @@ export class DebugVisualizer {
     });
   }
 
+  /**
+   * Desenha as arestas do grafo.
+   * @private
+   */
   _drawEdges() {
     this.ctx.strokeStyle = this.config.edgeColor;
     this.ctx.lineWidth = 1;
@@ -165,6 +199,10 @@ export class DebugVisualizer {
     });
   }
 
+  /**
+   * Desenha os obstáculos ativos.
+   * @private
+   */
   _drawObstacles() {
     this.ctx.fillStyle = this.config.obstacleColor;
     this.activeObstacles.forEach((obstacle) => {
@@ -177,6 +215,10 @@ export class DebugVisualizer {
     });
   }
 
+  /**
+   * Desenha o caminho atual encontrado.
+   * @private
+   */
   _drawPath() {
     if (this.currentPath.length < 2) return;
     this.ctx.strokeStyle = this.config.pathColor;
@@ -186,7 +228,7 @@ export class DebugVisualizer {
       i === 0 ? this.ctx.moveTo(p.x, p.y) : this.ctx.lineTo(p.x, p.y);
     });
     this.ctx.stroke();
-    // Pontos da rota
+    // Desenha os pontos do caminho
     this.ctx.fillStyle = this.config.pathColor;
     this.currentPath.forEach((p) => {
       this.ctx.beginPath();
@@ -195,6 +237,10 @@ export class DebugVisualizer {
     });
   }
 
+  /**
+   * Desenha os nós do grafo.
+   * @private
+   */
   _drawNodes() {
     this.ctx.fillStyle = this.config.nodeColor;
     this.navMesh.graph.nodes.forEach((node) => {
@@ -205,6 +251,10 @@ export class DebugVisualizer {
     });
   }
 
+  /**
+   * Desenha o grid espacial utilizado para indexação de obstáculos.
+   * @private
+   */
   _drawSpatialGrid() {
     if (!this.navMesh.dynamicObstacleManager) return;
     this.ctx.strokeStyle = this.config.spatialGridColor;
@@ -218,11 +268,15 @@ export class DebugVisualizer {
     );
   }
 
+  /**
+   * Desenha rótulos nos nós, obstáculos e informações do caminho.
+   * @private
+   */
   _drawLabels() {
     this.ctx.fillStyle = this.config.labelColor;
     this.ctx.font = "12px Arial";
     this.ctx.textAlign = "center";
-    // Rótulos para nodes
+    // Rótulos para os nós
     this.navMesh.graph.nodes.forEach((node) => {
       const center = node.polygon.getCenter();
       this.ctx.fillText(`N${node.id}`, center.x, center.y - 10);
@@ -232,7 +286,7 @@ export class DebugVisualizer {
       const center = obstacle.getCenter();
       this.ctx.fillText(`O${id.slice(0, 4)}`, center.x, center.y);
     });
-    // Info da rota
+    // Informação do caminho
     if (this.currentPath.length > 0) {
       const firstPoint = this.currentPath[0];
       this.ctx.fillText(
@@ -243,6 +297,11 @@ export class DebugVisualizer {
     }
   }
 
+  /**
+   * Habilita ou desabilita a visualização e atualiza a configuração.
+   * @param {boolean} [enabled=true] - Se true, ativa a visualização.
+   * @param {Object} [newConfig={}] - Novas configurações.
+   */
   toggle(enabled = true, newConfig = {}) {
     this.config.enabled = enabled;
     if (newConfig) this.updateConfig(newConfig);
@@ -251,8 +310,8 @@ export class DebugVisualizer {
   }
 
   /**
-   * Captura dados de debug para inspeção
-   * @returns {Object} Estado atual do sistema
+   * Captura dados de debug para análise.
+   * @returns {Object} Estado atual do sistema.
    */
   captureDebugData() {
     const agentPaths = Array.from(
@@ -266,7 +325,7 @@ export class DebugVisualizer {
       polygons: this.navMesh.polygons.length,
       nodes: this.navMesh.graph.nodes.length,
       obstacles: this.navMesh.dynamicObstacleManager.obstacles.size,
-      agentPaths, // lista dos caminhos dos agentes
+      agentPaths,
       spatialGrid: {
         cellSize: this.navMesh.dynamicObstacleManager?.options.cellSize,
         cells: this.navMesh.dynamicObstacleManager?.spatialGrid.grid.size,
@@ -277,8 +336,8 @@ export class DebugVisualizer {
   }
 
   /**
-   * Destaca áreas acessíveis para um perfil específico
-   * @param {AgentProfile} profile
+   * Destaca áreas acessíveis para um perfil de agente.
+   * @param {AgentProfile} profile - Perfil do agente.
    */
   highlightAccessibleAreas(profile) {
     const accessibleNodes = this.navMesh.graph.nodes.filter(
@@ -287,7 +346,6 @@ export class DebugVisualizer {
         node.polygon.getWidth() >= profile.minPathWidth &&
         profile.allowedLayers.has(node.polygon.layer)
     );
-
     this.ctx.fillStyle = "rgba(0, 255, 0, 0.2)";
     accessibleNodes.forEach((node) => {
       const center = node.polygon.getCenter();
@@ -296,11 +354,12 @@ export class DebugVisualizer {
       this.ctx.fill();
     });
   }
+
   /**
-   * Desenha caminhos de todos os agentes ativos
+   * Desenha os caminhos de todos os agentes ativos.
    */
   drawAllAgentPaths() {
-    this.navMesh.agentManager?.activeAgents.forEach((agent, id) => {
+    this.navMesh.agentManager?.activeAgents.forEach((agent) => {
       if (agent.currentPath.length > 1) {
         this.ctx.strokeStyle = agent.profile.color || "#ff0000";
         this.ctx.beginPath();
@@ -311,10 +370,11 @@ export class DebugVisualizer {
       }
     });
   }
+
   /**
-   * Destaca camadas específicas
-   * @param {Array<string>} layers - Lista de camadas
-   * @param {string} highlightColor - Cor de destaque
+   * Destaca polígonos que pertencem a camadas específicas.
+   * @param {Array<string>} layers - Lista de camadas.
+   * @param {string} [highlightColor="rgba(255, 255, 0, 0.3)"] - Cor de destaque.
    */
   highlightLayers(layers, highlightColor = "rgba(255, 255, 0, 0.3)") {
     this.navMesh.polygons.forEach((poly) => {

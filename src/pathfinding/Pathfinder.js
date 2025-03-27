@@ -5,13 +5,27 @@ import { EventEmitter } from "../navmesh/EventEmitter.js";
  * Sistema avançado de pathfinding com múltiplos algoritmos e parametrização.
  */
 export class Pathfinder {
+  /**
+   * Inscreve um listener para eventos globais do Pathfinder.
+   * @param {string} event - Nome do evento.
+   * @param {Function} listener - Callback a ser executada.
+   */
   static on(event, listener) {
     EventRegistry._instance.on(event, listener);
   }
+
+  /**
+   * Remove um listener de um evento global.
+   * @param {string} event - Nome do evento.
+   * @param {Function} listener - Callback a ser removida.
+   */
   static off(event, listener) {
     EventRegistry._instance.off(event, listener);
   }
 
+  /**
+   * Algoritmos suportados.
+   */
   static ALGORITHMS = {
     "A*": "A_STAR",
     DIJKSTRA: "DIJKSTRA",
@@ -20,24 +34,26 @@ export class Pathfinder {
   };
 
   /**
-   * @method findPath
-   * @param {Object} config
-   * @param {Graph} config.graph - Grafo de navegação (com pesos corretos)
-   * @param {number|Object} config.start - Nó inicial ou coord. {x,y}
-   * @param {number|Object} config.end - Nó final ou coord. {x,y}
-   * @param {string} [config.method='A*'] - Algoritmo (A*, Dijkstra, BFS, DFS)
-   * @param {Function} [config.heuristic] - Heurística p/ A*
-   * @param {Function} [config.costFunction] - Função de custo (usada em A* e Dijkstra)
-   * @param {number} [config.maxIterations=10000]
-   * @param {boolean} [config.smoothPath=false]
-   * @param {number} [config.smoothingTolerance=0.25]
-   * @param {boolean} [config.partialPath=true]
-   * @param {boolean} [config.allowDiagonal=true]
-   * @param {Function} [config.validator] - Função p/ validar cada aresta
-   * @returns {PathResult} Objeto com {path, points, distance, complete, error}
+   * Encontra o caminho entre dois pontos.
+   * Emite eventos "pathrequested", "pathfound" ou "pathblocked" no grafo.
+   *
+   * @param {Object} config - Configurações do pathfinding.
+   * @param {Graph} config.graph - Grafo de navegação.
+   * @param {number|Object} config.start - Nó inicial ou coordenada {x, y}.
+   * @param {number|Object} config.end - Nó final ou coordenada {x, y}.
+   * @param {string} [config.method='A*'] - Algoritmo a ser utilizado.
+   * @param {Function} [config.heuristic] - Função heurística (para A*).
+   * @param {Function} [config.costFunction] - Função de custo (para A* e Dijkstra).
+   * @param {number} [config.maxIterations=10000] - Máximo de iterações.
+   * @param {boolean} [config.smoothPath=false] - Indica se o caminho deve ser suavizado.
+   * @param {number} [config.smoothingTolerance=0.25] - Tolerância para suavização.
+   * @param {boolean} [config.partialPath=true] - Permite retornar caminho parcial.
+   * @param {boolean} [config.allowDiagonal=true] - Permite movimentos diagonais.
+   * @param {Function} [config.validator] - Função para validar cada aresta.
+   * @returns {Object} Resultado com {path, points, distance, complete, error}.
    */
   static findPath(config) {
-    // Evento de "pathrequested"
+    // Emite evento de requisição de caminho
     config.graph.emit("pathrequested", {
       start: config.start,
       end: config.end,
@@ -56,16 +72,17 @@ export class Pathfinder {
     };
     const cfg = { ...defaults, ...config };
 
+    // Normaliza o método
     if (cfg.method === "A*") {
       cfg.method = "A_STAR";
     }
 
-    // Localiza nós (ou o mais próximo, se "start"/"end" for {x,y})
+    // Resolve nós (ou o mais próximo se start/end forem coordenadas)
     const { startNode, endNode } = this._resolveNodes(cfg);
     cfg.startNode = startNode;
     cfg.endNode = endNode;
 
-    // Executa o algoritmo
+    // Executa o algoritmo selecionado
     let rawPath;
     switch (cfg.method.toUpperCase()) {
       case "A_STAR":
@@ -84,6 +101,7 @@ export class Pathfinder {
         throw new Error(`Algoritmo desconhecido: ${cfg.method}`);
     }
 
+    // Emite eventos conforme o resultado
     if (rawPath.length > 0) {
       cfg.graph.emit("pathfound", rawPath);
     } else {
@@ -93,9 +111,7 @@ export class Pathfinder {
     return this._postProcessPath(rawPath, cfg);
   }
 
-  // -------------------------------------------------------------
-  // A* - Utiliza costFunction + heurística
-  // -------------------------------------------------------------
+  // ------------- Algoritmo A* -------------
   static _aStar(cfg, startNode, endNode) {
     const openSet = new PriorityQueue();
     const cameFrom = new Map();
@@ -123,7 +139,6 @@ export class Pathfinder {
         const tentativeG =
           (gScore.get(currentId) || 0) + cfg.costFunction(edge);
         const neighborId = edge.nodeId;
-        // Verifica se o nó vizinho existe
         const neighborNode = cfg.graph.getNode(neighborId);
         if (!neighborNode) continue;
 
@@ -146,6 +161,7 @@ export class Pathfinder {
     return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
   }
 
+  // ------------- Algoritmo DFS -------------
   static _dfs(cfg, startNode, endNode) {
     const stack = [startNode.id];
     const visited = new Set([startNode.id]);
@@ -159,7 +175,6 @@ export class Pathfinder {
         return this._reconstructPath(cameFrom, endNode.id);
       }
       const currentNode = cfg.graph.getNode(currentId);
-
       for (const edge of cfg.graph.getAdjacencias(currentId)) {
         if (!visited.has(edge.nodeId) && cfg.validator(edge, currentNode)) {
           visited.add(edge.nodeId);
@@ -168,14 +183,10 @@ export class Pathfinder {
         }
       }
     }
-
-    // Se não achou o endNode:
     return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
   }
 
-  // -------------------------------------------------------------
-  // Dijkstra - Usa costFunction, mas sem heurística
-  // -------------------------------------------------------------
+  // ------------- Algoritmo Dijkstra -------------
   static _dijkstra(cfg, startNode, endNode) {
     const distances = new Map();
     const prev = new Map();
@@ -184,7 +195,7 @@ export class Pathfinder {
     let foundEnd = false;
     let currentId = startNode.id;
 
-    // Inicializa distâncias com Infinity
+    // Inicializa distâncias
     cfg.graph.nodes.forEach((node) => {
       distances.set(node.id, Infinity);
       prev.set(node.id, null);
@@ -199,13 +210,10 @@ export class Pathfinder {
         break;
       }
       const currentNode = cfg.graph.getNode(currentId);
-
       for (const edge of cfg.graph.getAdjacencias(currentId)) {
         if (!cfg.validator(edge, currentNode)) continue;
 
-        // alt = dist(currentId) + costFunction(edge)
         const alt = distances.get(currentId) + cfg.costFunction(edge);
-
         const neighborId = edge.nodeId;
         if (alt < distances.get(neighborId)) {
           distances.set(neighborId, alt);
@@ -223,9 +231,7 @@ export class Pathfinder {
     return [];
   }
 
-  // -------------------------------------------------------------
-  // BFS (sem peso)
-  // -------------------------------------------------------------
+  // ------------- Algoritmo BFS -------------
   static _bfs(cfg, startNode, endNode) {
     const queue = [startNode.id];
     const visited = new Set([startNode.id]);
@@ -250,36 +256,14 @@ export class Pathfinder {
     return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
   }
 
-  // -------------------------------------------------------------
-  // DFS (sem peso)
-  // -------------------------------------------------------------
-  static _dfs(cfg, startNode, endNode) {
-    const stack = [startNode.id];
-    const visited = new Set([startNode.id]);
-    const cameFrom = new Map();
-    let iterations = 0;
-    let currentId = startNode.id;
+  // ------------- Funções auxiliares -------------
 
-    while (stack.length > 0 && iterations++ < cfg.maxIterations) {
-      currentId = stack.pop();
-      if (currentId === endNode.id) {
-        return this._reconstructPath(cameFrom, endNode.id);
-      }
-      const currentNode = cfg.graph.getNode(currentId);
-      for (const edge of cfg.graph.getAdjacencias(currentId)) {
-        if (!visited.has(edge.nodeId) && cfg.validator(edge, currentNode)) {
-          visited.add(edge.nodeId);
-          cameFrom.set(edge.nodeId, currentId);
-          stack.push(edge.nodeId);
-        }
-      }
-    }
-    return cfg.partialPath ? this._reconstructPath(cameFrom, currentId) : [];
-  }
-
-  // -------------------------------------------------------------
-  // Funções auxiliares
-  // -------------------------------------------------------------
+  /**
+   * Resolve os nós de início e fim a partir das configurações.
+   * Se o target for um número, usa o nó diretamente; se for um objeto {x, y},
+   * encontra o nó mais próximo.
+   * @private
+   */
   static _resolveNodes(cfg) {
     const resolveNode = (target) => {
       if (typeof target === "number") {
@@ -295,6 +279,10 @@ export class Pathfinder {
     return { startNode, endNode };
   }
 
+  /**
+   * Encontra o nó mais próximo de um ponto.
+   * @private
+   */
   static _findNearestNode(graph, point) {
     let minDist = Infinity;
     let best = null;
@@ -309,6 +297,10 @@ export class Pathfinder {
     return best;
   }
 
+  /**
+   * Reconstrói o caminho a partir de um mapa de predecessores.
+   * @private
+   */
   static _reconstructPath(cameFrom, endId) {
     const path = [];
     let current = endId;
@@ -319,15 +311,17 @@ export class Pathfinder {
     return path;
   }
 
+  /**
+   * Pós-processa o caminho, filtrando IDs inválidos e calculando métricas.
+   * @private
+   */
   static _postProcessPath(rawPath, cfg) {
-    // filtra possíveis IDs inválidos
     const validPath = [];
     for (const id of rawPath) {
       const node = cfg.graph.getNode(id);
       if (!node) break;
       validPath.push(id);
     }
-
     const pathNodes = validPath.map((id) => cfg.graph.getNode(id));
     const points = pathNodes.map((n) => n.polygon.getCenter());
     let distance = this._calculatePathDistance(points);
@@ -344,6 +338,10 @@ export class Pathfinder {
     };
   }
 
+  /**
+   * Calcula a distância total do caminho com base nos centros dos nós.
+   * @private
+   */
   static _calculatePathDistance(points) {
     let dist = 0;
     for (let i = 1; i < points.length; i++) {
@@ -355,7 +353,9 @@ export class Pathfinder {
   }
 }
 
-// Fila de prioridade simples para A* e Dijkstra
+/**
+ * Fila de prioridade simples usada nos algoritmos A* e Dijkstra.
+ */
 class PriorityQueue {
   constructor() {
     this.elements = [];
@@ -375,6 +375,9 @@ class PriorityQueue {
   }
 }
 
+/**
+ * Registro global de eventos para o Pathfinder.
+ */
 class EventRegistry {
   static _instance = new EventEmitter();
   static addGlobalListener(listener) {
@@ -385,7 +388,16 @@ class EventRegistry {
   }
 }
 
+/**
+ * Eventos auxiliares para navegação.
+ */
 export class NavigationEvents {
+  /**
+   * Registra um listener global com contexto e timestamp.
+   * @param {any} context - Contexto a ser incluído.
+   * @param {Function} listener - Callback para o evento.
+   * @returns {Function} Listener encapsulado.
+   */
   static registerGlobalListener(context, listener) {
     const wrappedListener = (event) => {
       const enhancedEvent = { ...event, timestamp: Date.now(), context };
@@ -394,6 +406,12 @@ export class NavigationEvents {
     EventRegistry.addGlobalListener(wrappedListener);
     return wrappedListener;
   }
+
+  /**
+   * Cria um proxy para redirecionar chamadas de "on" e "off".
+   * @param {Object} target - Objeto alvo.
+   * @returns {Proxy} Proxy com os métodos de eventos.
+   */
   static createEventProxy(target) {
     return new Proxy(target, {
       get(obj, prop) {
