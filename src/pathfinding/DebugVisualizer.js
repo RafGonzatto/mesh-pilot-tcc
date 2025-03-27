@@ -260,13 +260,13 @@ export class DebugVisualizer {
     ).map((agent) => ({
       id: agent.id,
       type: agent.type,
-      currentPath: agent.currentPath,
+      currentPath: agent.debugPath || agent.currentPath,
     }));
     return {
       polygons: this.navMesh.polygons.length,
       nodes: this.navMesh.graph.nodes.length,
-      obstacles: this.activeObstacles.size,
-      agentPaths, // agora com o currentPath de cada agente
+      obstacles: this.navMesh.dynamicObstacleManager.obstacles.size,
+      agentPaths, // lista dos caminhos dos agentes
       spatialGrid: {
         cellSize: this.navMesh.dynamicObstacleManager?.options.cellSize,
         cells: this.navMesh.dynamicObstacleManager?.spatialGrid.grid.size,

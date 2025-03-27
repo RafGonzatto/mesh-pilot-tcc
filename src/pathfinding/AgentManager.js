@@ -99,6 +99,8 @@ export class AgentManager extends EventEmitter {
       partialPath: partial,
     });
     agent.currentPath = result.points;
+    // Armazena uma cópia do caminho para debug
+    agent.debugPath = [...result.points];
     this.emit("agentPathUpdated", {
       agentId,
       path: agent.currentPath,

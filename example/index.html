@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>NavMesh Demo Game</title>
+    <!-- Link para o arquivo de estilo -->
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <!-- Imagens (pré-carregadas no onload) -->
+    <img id="obstacleImage" src="../../static/obstacle.png" />
+    <img id="humanImage" src="../../static/human.png" />
+    <img id="carImage" src="../../static/car.png" />
+    <img id="boatImage" src="../../static/boat.png" />
+    <img id="groundImage" src="../../static/ground.png" />
+    <img id="waterImage" src="../../static/water.png" />
+    <img id="roadImage" src="../../static/road.png" />
+    <img id="bridgeImage" src="../../static/bridge.png" />
+
+    <!-- Painéis fixos e status -->
+    <div id="gameStatus">
+      <span id="debugStatus">Debug: Inativo</span> |
+      <span id="pauseStatus">Jogo: Executando</span>
+    </div>
+
+    <div id="controls">
+      <h4>Controles</h4>
+      <button onclick="toggleDebug()">Toggle Debug</button>
+      <button onclick="openDebugModal()">Open Debug Modal</button>
+      <button onclick="togglePause()">Toggle Pause</button>
+      <h4>Algoritmo</h4>
+      <select id="pathfindingMethod">
+        <option value="A*">A*</option>
+        <option value="BFS">BFS</option>
+        <option value="Dijkstra">Dijkstra</option>
+        <option value="DFS">DFS</option>
+      </select>
+      <h4>Agentes</h4>
+      <div id="agentList"></div>
+    </div>
+
+    <div id="howToPlay">
+      <h4>Como Jogar</h4>
+      <ol>
+        <li>Selecione um agente na lista</li>
+        <li>Clique no mapa para definir destino</li>
+        <li>Duplo clique para adicionar obstáculo</li>
+      </ol>
+    </div>
+
+    <div id="layerLegend">
+      <h4>Custos do Agente</h4>
+    </div>
+
+    <div id="gameContainer">
+      <canvas id="gameCanvas"></canvas>
+      <canvas id="debugCanvas"></canvas>
+    </div>
+
+    <!-- Modal de Debug -->
+    <div id="debugModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeDebugModal()">&times;</span>
+        <pre id="debugLog"></pre>
+      </div>
+    </div>
+
+    <script type="module" src="game.js"></script>
+  </body>
+</html>
