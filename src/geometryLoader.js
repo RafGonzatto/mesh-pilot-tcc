@@ -1,17 +1,36 @@
-// src/geometryLoader.js
-const path = require("path");
-const { pathToFileURL } = require("url");
-const fs = require("fs");
+// Carrega WASM se houver; senão, usa o fallback JS.
+// Sempre exporta geometryReady, segmentsIntersect e _segments_intersect.
 
-const createGeometry = require("../dist/geometry_wasm.js");
+let impl = () => false;
+let resolveReady;
+export const geometryReady = new Promise((r) => (resolveReady = r));
 
-const wasmPath = path.join(__dirname, "..", "dist", "geometry_wasm.wasm");
-const wasmURL = pathToFileURL(wasmPath).href; // file:///C:/…
+export default async function createGeometry() {
+  // garante que o loader já escolheu WASM ou JS
+  await geometryReady;
+  return { segmentsIntersect, _segments_intersect: segmentsIntersect };
+}
 
-module.exports = (overrides = {}) =>
-  createGeometry({
-    locateFile: (f) => (f.endsWith(".wasm") ? wasmURL : f),
-    // se preferir embutir o binário:
-    // wasmBinary: fs.readFileSync(wasmPath),
-    ...overrides,
-  });
+(async () => {
+  // Dentro do Jest usamos só o fallback JS.
+  if (process.env.JEST_WORKER_ID !== undefined) {
+    const js = await import("./geometry_js_fallback.js");
+    impl = js.segmentsIntersect ?? js._segments_intersect ?? impl;
+    return resolveReady();
+  }
+  try {
+    const factory = (await import("../dist/geometry_wasm.js")).default;
+    const mod = await factory();
+    impl = mod.segmentsIntersect ?? mod._segments_intersect ?? impl;
+  } catch {
+    const js = await import("./geometry_js_fallback.js");
+    impl = js.segmentsIntersect ?? js._segments_intersect ?? impl;
+  } finally {
+    resolveReady();
+  }
+})();
+
+export function segmentsIntersect(...args) {
+  return impl(...args);
+}
+export { segmentsIntersect as _segments_intersect };

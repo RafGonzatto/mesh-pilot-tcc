@@ -1,4 +1,6 @@
 // example/smoke-test/node-smoke.js
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 const fs = require("fs");
 const path = require("path");
 const { pathToFileURL } = require("url");

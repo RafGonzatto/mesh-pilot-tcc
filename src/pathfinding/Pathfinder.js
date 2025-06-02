@@ -69,6 +69,7 @@ export class Pathfinder {
       partialPath: true,
       allowDiagonal: true,
       validator: () => true,
+      detailed: false,
     };
     const cfg = { ...defaults, ...config };
 
@@ -108,7 +109,8 @@ export class Pathfinder {
       cfg.graph.emit("pathblocked", { start: cfg.start, end: cfg.end });
     }
 
-    return this._postProcessPath(rawPath, cfg);
+    const result = this._postProcessPath(rawPath, cfg);
+    return cfg.detailed ? result : result.path;
   }
 
   // ------------- Algoritmo A* -------------
