@@ -124,7 +124,7 @@ export class NavMesh extends EventEmitter {
     if (sId === null || eId === null)
       return { complete: false, reason: "point_outside_navmesh" };
     if (sId === eId) return { complete: true, path: [start, end] };
-    return Pathfinder.findPath({ graph: this.graph, startId: sId, endId: eId });
+    return Pathfinder.findPath({ graph: this.graph, start: sId, end: eId });
   }
 
   // =========================================================
