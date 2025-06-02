@@ -4,6 +4,7 @@ import {
   DebugVisualizer,
   AgentProfile,
 } from "../../src/index.js";
+import { geometryReady } from "../src/dist/geometryLoader.js";
 
 /**
  * Stringify seguro para objetos com referências circulares.
@@ -100,9 +101,13 @@ class Game {
     this.selectedAgentId = "agent1"; // Agente selecionado inicialmente
 
     this._setupCanvases();
-    this._initNavMesh();
     this._setupEvents();
+    this._init();
+  }
+  async _init() {
+    await this._initNavMesh();
     this._startGameLoop();
+    this._updateUI();
   }
 
   /**
@@ -120,7 +125,8 @@ class Game {
   /**
    * Inicializa NavMesh, configura camadas, cria grade e agentes.
    */
-  _initNavMesh() {
+  async _initNavMesh() {
+    await geometryReady;
     this.navMesh = new NavMesh(true);
     this.navMesh.enableDynamicObstacles({
       cellSize: 80,

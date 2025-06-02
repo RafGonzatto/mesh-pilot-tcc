@@ -4,6 +4,7 @@ import { DynamicObstacleManager } from "./DynamicObstacleManager.js";
 import { Graph } from "../pathfinding/Graph.js";
 import { AgentManager } from "../pathfinding/AgentManager.js";
 import { LayerSystem } from "./LayerSystem.js";
+import { geometryReady } from "../dist/geometryLoader.js";
 
 /**
  * @module NavMesh
@@ -175,22 +176,42 @@ export class NavMesh extends EventEmitter {
    * @returns {boolean}
    */
   _segmentsIntersect(p1, p2, p3, p4) {
-    const EPS = 1e-9;
-    const d1 = this._direction(p3, p4, p1),
-      d2 = this._direction(p3, p4, p2),
-      d3 = this._direction(p1, p2, p3),
-      d4 = this._direction(p1, p2, p4);
-    const cruza =
-      ((d1 > EPS && d2 < -EPS) || (d1 < -EPS && d2 > EPS)) &&
-      ((d3 > EPS && d4 < -EPS) || (d3 < -EPS && d4 > EPS));
-    if (cruza) return true;
-
-    // Verifica casos de colinearidade
-    if (Math.abs(d1) < EPS && this._onSegment(p3, p4, p1)) return true;
-    if (Math.abs(d2) < EPS && this._onSegment(p3, p4, p2)) return true;
-    if (Math.abs(d3) < EPS && this._onSegment(p1, p2, p3)) return true;
-    if (Math.abs(d4) < EPS && this._onSegment(p1, p2, p4)) return true;
-    return false;
+    return this._g
+      ? this._g.segmentsIntersect(
+          p1.x,
+          p1.y,
+          p2.x,
+          p2.y,
+          p3.x,
+          p3.y,
+          p4.x,
+          p4.y
+        )
+      : // fallback JS:
+        (({ x: a, y: b }, { x: c, y: d }, { x: e, y: f }, { x: g, y: h }) => {
+          const dir = (x1, y1, x2, y2, x3, y3) =>
+            (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
+          const on = (x1, y1, x2, y2, x3, y3) =>
+            x3 >= Math.min(x1, x2) &&
+            x3 <= Math.max(x1, x2) &&
+            y3 >= Math.min(y1, y2) &&
+            y3 <= Math.max(y1, y2);
+          const EPS = 1e-9,
+            d1 = dir(e, f, g, h, a, b),
+            d2 = dir(e, f, g, h, c, d),
+            d3 = dir(a, b, c, d, e, f),
+            d4 = dir(a, b, c, d, g, h);
+          if (
+            ((d1 > EPS && d2 < -EPS) || (d1 < -EPS && d2 > EPS)) &&
+            ((d3 > EPS && d4 < -EPS) || (d3 < -EPS && d4 > EPS))
+          )
+            return true;
+          if (Math.abs(d1) < EPS && on(e, f, g, h, a, b)) return true;
+          if (Math.abs(d2) < EPS && on(e, f, g, h, c, d)) return true;
+          if (Math.abs(d3) < EPS && on(a, b, c, d, e, f)) return true;
+          if (Math.abs(d4) < EPS && on(a, b, c, d, g, h)) return true;
+          return false;
+        })(p1, p2, p3, p4);
   }
 
   /**
