@@ -1,6 +1,6 @@
 {
   "name": "mesh-pilot",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "NavMesh + path-finding + obstáculos dinâmicos em JS/WASM",
   "keywords": [
     "navmesh",
@@ -45,7 +45,7 @@
     "build:wasm:Windows_NT": "scripts\\build-wasm.bat",
     "build:wasm:Linux": "bash scripts/build-wasm.sh",
     "build:wasm:Darwin": "bash scripts/build-wasm.sh",
-    "build:js": "webpack --config webpack.config.cjs",
+    "build:js": "webpack --config webpack.config.cjs && webpack --config webpack.esm.config.cjs",
     "build": "npm run build:wasm && npm run build:js",
     "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
     "docs": "typedoc",
@@ -73,5 +73,9 @@
     "path": false,
     "url": false
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "exports": {
+    "import": "./dist/mesh-pilot.esm.js",
+    "require": "./dist/mesh-pilot.umd.js"
+  }
 }
