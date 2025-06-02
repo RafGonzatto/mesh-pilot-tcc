@@ -4,7 +4,7 @@ import { DynamicObstacleManager } from "./DynamicObstacleManager.js";
 import { Graph } from "../pathfinding/Graph.js";
 import { AgentManager } from "../pathfinding/AgentManager.js";
 import { LayerSystem } from "./LayerSystem.js";
-import { geometryReady } from "../dist/geometryLoader.js";
+import { geometryReady } from "../geometryLoader.js";
 
 /**
  * @module NavMesh

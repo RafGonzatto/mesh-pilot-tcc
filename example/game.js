@@ -4,7 +4,7 @@ import {
   DebugVisualizer,
   AgentProfile,
 } from "../../src/index.js";
-import { geometryReady } from "../src/dist/geometryLoader.js";
+import { geometryReady } from "../src/geometryLoader.js";
 
 /**
  * Stringify seguro para objetos com referências circulares.

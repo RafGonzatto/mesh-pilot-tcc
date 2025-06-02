@@ -422,3 +422,4 @@ export class NavigationEvents {
     });
   }
 }
+export default Pathfinder;
