@@ -1,6 +1,6 @@
 {
   "name": "mesh-pilot",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "description": "NavMesh + path-finding + obstáculos dinâmicos em JS/WASM",
   "keywords": [
     "navmesh",

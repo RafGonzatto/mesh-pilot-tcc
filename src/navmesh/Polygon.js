@@ -113,9 +113,11 @@ export class Polygon {
         yi = this.vertices[i].y;
       const xj = this.vertices[j].x,
         yj = this.vertices[j].y;
+      const EPS = 1e-9; // tolerância
+      const denom = yj - yi + EPS; // evita divisão por 0
       const intersect =
         yi > point.y !== yj > point.y &&
-        point.x < ((xj - xi) * (point.y - yi)) / (yj - yi) + xi;
+        point.x < ((xj - xi) * (point.y - yi)) / denom + xi;
       if (intersect) inside = !inside;
     }
     return inside;

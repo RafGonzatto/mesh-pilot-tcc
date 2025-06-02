@@ -4,6 +4,7 @@ import { DynamicObstacleManager } from "./DynamicObstacleManager.js";
 import { Graph } from "../pathfinding/Graph.js";
 import { AgentManager } from "../pathfinding/AgentManager.js";
 import { LayerSystem } from "./LayerSystem.js";
+import { Pathfinder } from "../pathfinding/Pathfinder.js";
 import { geometryReady } from "../geometryLoader.js";
 
 /**
@@ -19,28 +20,27 @@ export class NavMesh extends EventEmitter {
    */
   constructor(enableLogs = false) {
     super();
-    this._polygons = []; // Lista interna de polígonos
-    this._graph = null; // Grafo de adjacências entre polígonos
+    this._polygons = [];
+    this._graph = null;
     this.enableLogs = enableLogs;
     this.layerSystem = new LayerSystem(this);
-    // Inicializa o gerenciador de obstáculos dinâmicos
+
+    // Gerenciadores auxiliares
     this.enableDynamicObstacles();
-    // Cria o gerenciador de agentes
     this._agentManager = new AgentManager(this);
   }
 
-  /**
-   * Adiciona um polígono à NavMesh, validando a camada.
-   * @param {Polygon} poly - Instância de Polygon a ser adicionada.
-   */
+  // =========================================================
+  // API pública
+  // =========================================================
+
+  /** Adiciona um polígono à NavMesh. */
   addPolygon(poly) {
     try {
-      if (!(poly instanceof Polygon)) {
+      if (!(poly instanceof Polygon))
         throw new Error("NavMesh.addPolygon espera um Polygon válido.");
-      }
-      if (!this.layerSystem.registeredLayers.has(poly.layer)) {
+      if (!this.layerSystem.registeredLayers.has(poly.layer))
         throw new Error(`Camada ${poly.layer} não registrada`);
-      }
       this.polygons.push(poly);
       if (this.enableLogs) console.log("[NavMesh] Polygon adicionado.");
       this.emit("polygonadded", { polygon: poly, count: this.polygons.length });
@@ -49,17 +49,13 @@ export class NavMesh extends EventEmitter {
     }
   }
 
-  /**
-   * Constrói o grafo básico considerando adjacências entre polígonos,
-   * sem levar em conta obstáculos.
-   */
+  /** Constrói o grafo de adjacência simples. */
   buildGraph() {
     try {
       if (this.enableLogs)
         console.log("[NavMesh] buildGraph() – sem obstáculos.");
       const nodes = this.polygons.map((poly, i) => ({ id: i, polygon: poly }));
       const edges = [];
-      // Percorre os nós para verificar adjacências
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           if (this._saoAdjacentes(this.polygons[i], this.polygons[j])) {
@@ -85,33 +81,24 @@ export class NavMesh extends EventEmitter {
     }
   }
 
-  /**
-   * Constrói o grafo levando em conta obstáculos,
-   * removendo arestas que estão bloqueadas.
-   * @param {Polygon[]} [obstacles=[]] - Lista de obstáculos a considerar.
-   */
+  /** Constrói o grafo considerando obstáculos. */
   buildGraphConsideringObstacles(obstacles = []) {
-    if (this.enableLogs) {
+    if (this.enableLogs)
       console.log(
         "[NavMesh] buildGraphConsideringObstacles() – verificando interseções com obstáculos."
       );
-    }
     const nodes = this.polygons.map((poly, i) => ({ id: i, polygon: poly }));
     const edges = [];
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
-        // 1) Verifica se os polígonos são adjacentes
         if (!this._saoAdjacentes(this.polygons[i], this.polygons[j])) continue;
-        // 2) Verifica se a linha entre os centros não cruza obstáculos
         const centerA = this.polygons[i].getCenter();
         const centerB = this.polygons[j].getCenter();
         if (!this._bloqueadoPorObstaculo(centerA, centerB, obstacles)) {
           const peso = this._calcDistCenter(this.polygons[i], this.polygons[j]);
           edges.push([i, j, peso]);
-        } else {
-          if (this.enableLogs) {
-            console.log(`[NavMesh] Aresta ${i}→${j} BLOQUEADA por obstáculo.`);
-          }
+        } else if (this.enableLogs) {
+          console.log(`[NavMesh] Aresta ${i}→${j} BLOQUEADA por obstáculo.`);
         }
       }
     }
@@ -122,59 +109,52 @@ export class NavMesh extends EventEmitter {
       );
   }
 
-  // =========================
-  // Métodos de verificação interna
-  // =========================
+  /** Localiza qual polígono contém o ponto. */
+  locatePolygon(pt) {
+    for (let i = 0; i < this.polygons.length; i++) {
+      if (this.polygons[i].containsPoint(pt)) return i;
+    }
+    return null;
+  }
 
-  /**
-   * Verifica se dois polígonos são adjacentes.
-   * Usa sobreposição de bounding box e interseção de arestas.
-   * @private
-   * @param {Polygon} pA
-   * @param {Polygon} pB
-   * @returns {boolean} True se forem adjacentes.
-   */
+  /** Encontra o caminho de start → end usando o Pathfinder. */
+  findPath(start, end) {
+    const sId = this.locatePolygon(start);
+    const eId = this.locatePolygon(end);
+    if (sId === null || eId === null)
+      return { complete: false, reason: "point_outside_navmesh" };
+    if (sId === eId) return { complete: true, path: [start, end] };
+    return Pathfinder.findPath({ graph: this.graph, startId: sId, endId: eId });
+  }
+
+  // =========================================================
+  // Métodos internos de geometria
+  // =========================================================
+
   _saoAdjacentes(pA, pB) {
     const boxA = pA.getBoundingBox();
     const boxB = pB.getBoundingBox();
     if (!this._bboxOverlap(boxA, boxB)) return false;
-
     const edgesA = pA.getEdges();
     const edgesB = pB.getEdges();
     for (const ea of edgesA) {
       for (const eb of edgesB) {
-        if (this._segmentsIntersect(ea.start, ea.end, eb.start, eb.end)) {
+        if (this._segmentsIntersect(ea.start, ea.end, eb.start, eb.end))
           return true;
-        }
       }
     }
     return false;
   }
 
-  /**
-   * Verifica se duas bounding boxes se sobrepõem.
-   * @private
-   * @param {{xmin:number, xmax:number, ymin:number, ymax:number}} a
-   * @param {{xmin:number, xmax:number, ymin:number, ymax:number}} b
-   * @returns {boolean}
-   */
   _bboxOverlap(a, b) {
-    if (a.xmax < b.xmin) return false;
-    if (b.xmax < a.xmin) return false;
-    if (a.ymax < b.ymin) return false;
-    if (b.ymax < a.ymin) return false;
-    return true;
+    return !(
+      a.xmax < b.xmin ||
+      b.xmax < a.xmin ||
+      a.ymax < b.ymin ||
+      b.ymax < a.ymin
+    );
   }
 
-  /**
-   * Checa se dois segmentos se intersectam.
-   * @private
-   * @param {{x:number, y:number}} p1
-   * @param {{x:number, y:number}} p2
-   * @param {{x:number, y:number}} p3
-   * @param {{x:number, y:number}} p4
-   * @returns {boolean}
-   */
   _segmentsIntersect(p1, p2, p3, p4) {
     return this._g
       ? this._g.segmentsIntersect(
@@ -187,8 +167,7 @@ export class NavMesh extends EventEmitter {
           p4.x,
           p4.y
         )
-      : // fallback JS:
-        (({ x: a, y: b }, { x: c, y: d }, { x: e, y: f }, { x: g, y: h }) => {
+      : (({ x: a, y: b }, { x: c, y: d }, { x: e, y: f }, { x: g, y: h }) => {
           const dir = (x1, y1, x2, y2, x3, y3) =>
             (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1);
           const on = (x1, y1, x2, y2, x3, y3) =>
@@ -214,55 +193,14 @@ export class NavMesh extends EventEmitter {
         })(p1, p2, p3, p4);
   }
 
-  /**
-   * Calcula a direção do ponto p3 relativo ao vetor p1→p2.
-   * @private
-   * @param {{x:number, y:number}} p1
-   * @param {{x:number, y:number}} p2
-   * @param {{x:number, y:number}} p3
-   * @returns {number}
-   */
-  _direction(p1, p2, p3) {
-    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
-  }
-
-  /**
-   * Verifica se o ponto p3 está no segmento definido por p1 e p2.
-   * @private
-   * @param {{x:number, y:number}} p1
-   * @param {{x:number, y:number}} p2
-   * @param {{x:number, y:number}} p3
-   * @returns {boolean}
-   */
-  _onSegment(p1, p2, p3) {
-    const [minX, maxX] = [Math.min(p1.x, p2.x), Math.max(p1.x, p2.x)];
-    const [minY, maxY] = [Math.min(p1.y, p2.y), Math.max(p1.y, p2.y)];
-    return p3.x >= minX && p3.x <= maxX && p3.y >= minY && p3.y <= maxY;
-  }
-
-  /**
-   * Calcula a distância entre os centros de dois polígonos.
-   * @private
-   * @param {Polygon} a
-   * @param {Polygon} b
-   * @returns {number} Distância Euclidiana.
-   */
   _calcDistCenter(a, b) {
     const ca = a.getCenter();
     const cb = b.getCenter();
-    const dx = cb.x - ca.x,
-      dy = cb.y - ca.y;
+    const dx = cb.x - ca.x;
+    const dy = cb.y - ca.y;
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  /**
-   * Retorna true se a linha entre A e B interceptar algum obstáculo.
-   * @private
-   * @param {{x:number, y:number}} A
-   * @param {{x:number, y:number}} B
-   * @param {Polygon[]} obstacles
-   * @returns {boolean}
-   */
   _bloqueadoPorObstaculo(A, B, obstacles) {
     for (const obs of obstacles) {
       if (this._lineIntersectsPolygon(A, B, obs)) {
@@ -272,18 +210,8 @@ export class NavMesh extends EventEmitter {
     return false;
   }
 
-  /**
-   * Checa se a linha de p1 a p2 intercepta o polígono.
-   * Verifica interseção com as arestas ou se um dos pontos está dentro.
-   * @private
-   * @param {{x:number, y:number}} p1
-   * @param {{x:number, y:number}} p2
-   * @param {Polygon} poly
-   * @returns {boolean}
-   */
   _lineIntersectsPolygon(p1, p2, poly) {
-    const edges = poly.getEdges();
-    for (const e of edges) {
+    for (const e of poly.getEdges()) {
       if (this._segmentsIntersect(p1, p2, e.start, e.end)) {
         return true;
       }
@@ -294,28 +222,19 @@ export class NavMesh extends EventEmitter {
     return false;
   }
 
-  /**
-   * Inicializa e retorna o gerenciador de obstáculos dinâmicos.
-   * @param {object} [options] - Opções para configuração.
-   * @returns {DynamicObstacleManager}
-   */
+  // =========================================================
+  // Gerenciadores e utilidades
+  // =========================================================
+
   enableDynamicObstacles(options) {
     this._dynamicObstacleManager = new DynamicObstacleManager(this, options);
     return this._dynamicObstacleManager;
   }
 
-  /**
-   * Retorna o grafo ativo.
-   * @returns {Graph}
-   */
   getActiveGraph() {
     return this._graph;
   }
 
-  /**
-   * Cria e retorna uma cópia do grafo atual.
-   * @returns {Graph}
-   */
   cloneGraph() {
     return new Graph(
       this._graph.nodes.map((n) => ({ ...n })),
@@ -323,7 +242,14 @@ export class NavMesh extends EventEmitter {
     );
   }
 
-  // Getters para acesso às propriedades privadas
+  /**
+   * Cria ou retorna gerenciador de agentes.
+   */
+  createAgentManager() {
+    return this._agentManager;
+  }
+
+  // Getters
   get graph() {
     return this._graph;
   }
@@ -334,14 +260,6 @@ export class NavMesh extends EventEmitter {
 
   get dynamicObstacleManager() {
     return this._dynamicObstacleManager;
-  }
-
-  /**
-   * Retorna o gerenciador de agentes.
-   * @returns {AgentManager}
-   */
-  createAgentManager() {
-    return this._agentManager;
   }
 
   get agentManager() {
