@@ -6,20 +6,20 @@ Bem-vindo(a) ao guia oficial desta biblioteca de navegação e pathfinding em 2D
 
 ## **Índice**
 
-1. [Proposta Geral da Biblioteca](#proposta-geral-da-biblioteca)  
-2. [Principais Recursos (Features)](#principais-recursos-features)  
-3. [Conceitos Fundamentais](#conceitos-fundamentais)  
-   - [Polygons](#polygons)  
-   - [NavMesh e DynamicObstacleManager](#navmesh-e-dynamicobstaclemanager)  
-   - [Graph](#graph)  
-   - [LayerSystem](#layersystem)  
-   - [Pathfinder](#pathfinder)  
-   - [DebugVisualizer](#debugvisualizer)  
-4. [Instalação e Estrutura de Pastas](#instalação-e-estrutura-de-pastas)  
-5. [Exemplo Rápido (Quick Start)](#exemplo-rápido-quick-start)  
-6. [Uso Avançado](#uso-avançado)  
-7. [API Detalhada](#api-detalhada)  
-8. [Boas Práticas e Dicas](#boas-práticas-e-dicas)  
+1. [Proposta Geral da Biblioteca](#proposta-geral-da-biblioteca)
+2. [Principais Recursos (Features)](#principais-recursos-features)
+3. [Conceitos Fundamentais](#conceitos-fundamentais)
+   - [Polygons](#polygons)
+   - [NavMesh e DynamicObstacleManager](#navmesh-e-dynamicobstaclemanager)
+   - [Graph](#graph)
+   - [LayerSystem](#layersystem)
+   - [Pathfinder](#pathfinder)
+   - [DebugVisualizer](#debugvisualizer)
+4. [Instalação e Estrutura de Pastas](#instalação-e-estrutura-de-pastas)
+5. [Exemplo Rápido (Quick Start)](#exemplo-rápido-quick-start)
+6. [Uso Avançado](#uso-avançado)
+7. [API Detalhada](#api-detalhada)
+8. [Boas Práticas e Dicas](#boas-práticas-e-dicas)
 
 ---
 
@@ -30,7 +30,7 @@ Esta biblioteca surgiu para **facilitar a criação e manutenção de sistemas d
 - **Detecção de caminhos** em mapas complexos.
 - Suporte a **obstáculos dinâmicos** e atualizações em tempo real.
 - **Customização por camadas** (layer system), possibilitando diferentes “tipos” de navegação.
-- Uso de algoritmos de pathfinding **clássicos** (A*, Dijkstra, BFS, DFS) e extensões.
+- Uso de algoritmos de pathfinding **clássicos** (A\*, Dijkstra, BFS, DFS) e extensões.
 - **Visualização de debug** para auxiliar no desenvolvimento.
 
 Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo de navegação). A biblioteca gerencia esses conceitos e fornece uma série de utilitários para manusear o mapa (polígonos), encontrar caminhos (Pathfinder), e desenhar todo o processo (DebugVisualizer).
@@ -49,7 +49,7 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 4. **DynamicObstacleManager** para adicionar, remover ou mover obstáculos em tempo real, atualizando o grafo.
 5. **LayerSystem** para registro de camadas, aplicação de filtros de INCLUSÃO, EXCLUSÃO e modificadores de CUSTO.
 6. **Pathfinder** com diversos algoritmos:
-   - A* (A_Star)
+   - A\* (A_Star)
    - Dijkstra
    - BFS
    - DFS
@@ -68,7 +68,7 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 
 ### 3.1 **Polygons**
 
-- Representam **áreas** 2D (por exemplo, células de um terreno ou qualquer região).  
+- Representam **áreas** 2D (por exemplo, células de um terreno ou qualquer região).
 - Possuem métodos para:
   - **`getBoundingBox()`**: Retorna o retângulo mínimo que envolve o polígono.
   - **`getEdges()`**: Lista de arestas (segmentos) do polígono.
@@ -79,12 +79,12 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 
 ### 3.2 **NavMesh e DynamicObstacleManager**
 
-- **NavMesh** é a classe principal que gerencia os **polígonos** e constrói um **Graph** de navegação.  
+- **NavMesh** é a classe principal que gerencia os **polígonos** e constrói um **Graph** de navegação.
 - Permite métodos como:
   - **`addPolygon(poly)`**: Adiciona um polígono à malha.
   - **`buildGraph()`**: Constrói o grafo de adjacências sem considerar obstáculos.
-  - **`buildGraphConsideringObstacles(obstacles)`**: Constrói o grafo considerando uma lista de obstáculos (bloqueios).  
-  - **`enableDynamicObstacles()`**: Habilita o sistema de obstáculos dinâmicos.  
+  - **`buildGraphConsideringObstacles(obstacles)`**: Constrói o grafo considerando uma lista de obstáculos (bloqueios).
+  - **`enableDynamicObstacles()`**: Habilita o sistema de obstáculos dinâmicos.
   - **`cloneGraph()`**: Retorna uma cópia do grafo atual.
 - **DynamicObstacleManager** é o componente que lida com obstáculos **em tempo real**:
   - **`addObstacle(obstacle: Polygon)`**: Adiciona um novo obstáculo e atualiza o grafo.
@@ -94,7 +94,7 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 
 ### 3.3 **Graph**
 
-- Estrutura de **nós** ({id, polygon}) e **arestas** ([idA, idB, peso]).  
+- Estrutura de **nós** ({id, polygon}) e **arestas** ([idA, idB, peso]).
 - Método principal:
   - **`getAdjacencias(nodeId)`**: Retorna as arestas ligadas a um nó (vizinhança).
   - **`getNode(nodeId)`**: Acessa o nó pelo ID.
@@ -102,7 +102,7 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 
 ### 3.4 **LayerSystem**
 
-- Gerencia **camadas** (por exemplo, “default”, “agua”, “terra”, “subterrâneo” etc.).  
+- Gerencia **camadas** (por exemplo, “default”, “agua”, “terra”, “subterrâneo” etc.).
 - Permite **filtros** de 3 tipos:
   1. **INCLUSION**: Nó deve satisfazer a condição para ser incluso.
   2. **EXCLUSION**: Nó é excluído se satisfizer a condição.
@@ -110,14 +110,18 @@ Os objetos centrais são **NavMesh** (malha de navegação) e **Graph** (grafo d
 - Exemplo de uso:
   ```js
   layerSystem.registerLayer("lava", { color: "#ff0000", traversalCost: 10 });
-  layerSystem.addFilter("lava", LayerSystem.FILTER_TYPES.EXCLUSION, (node, ctx) => {
-    return ctx.agentType !== "fire"; // exclui se o agente não for de fogo
-  });
+  layerSystem.addFilter(
+    "lava",
+    LayerSystem.FILTER_TYPES.EXCLUSION,
+    (node, ctx) => {
+      return ctx.agentType !== "fire"; // exclui se o agente não for de fogo
+    }
+  );
   ```
 
 ### 3.5 **Pathfinder**
 
-- Fornece métodos **estáticos** para encontrar caminhos em um grafo.  
+- Fornece métodos **estáticos** para encontrar caminhos em um grafo.
 - Suporta:
   - **A\*** (A_STAR)
   - **Dijkstra**
@@ -176,13 +180,13 @@ src/
 **Via npm**:
 
 ```bash
-npm install my-ia-library
+npm install mesh-pilot
 ```
 
 **Manual/local**:
 
 - Baixe ou clone este repositório
-- Copie a pasta my-ia-library para o seu projeto
+- Copie a pasta mesh-pilot para o seu projeto
 - Importe diretamente os arquivos de ./src/index.js no seu código.
 
 ---
@@ -201,15 +205,21 @@ import { Pathfinder } from "./pathfinding/Pathfinder.js";
 const navMesh = new NavMesh(true); // enableLogs = true (opcional)
 
 // 2) Registre camadas (opcional)
-navMesh.layerSystem.registerLayer("customLayer", { color: "#ff00ff", traversalCost: 2 });
+navMesh.layerSystem.registerLayer("customLayer", {
+  color: "#ff00ff",
+  traversalCost: 2,
+});
 
 // 3) Adicione alguns polígonos
-const poly1 = new Polygon([
-  { x: 10, y: 10 },
-  { x: 100, y: 10 },
-  { x: 100, y: 80 },
-  { x: 10, y: 80 }
-], { layer: "customLayer" });
+const poly1 = new Polygon(
+  [
+    { x: 10, y: 10 },
+    { x: 100, y: 10 },
+    { x: 100, y: 80 },
+    { x: 10, y: 80 },
+  ],
+  { layer: "customLayer" }
+);
 
 navMesh.addPolygon(poly1);
 
@@ -221,7 +231,7 @@ const pathResult = Pathfinder.findPath({
   graph: navMesh.graph,
   start: { x: 12, y: 12 },
   end: { x: 90, y: 70 },
-  method: "A*"
+  method: "A*",
 });
 console.log("Path:", pathResult.path, "Distance:", pathResult.distance);
 
@@ -229,7 +239,7 @@ console.log("Path:", pathResult.path, "Distance:", pathResult.distance);
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");
 const debug = new DebugVisualizer(ctx, navMesh, {
-  showNodes: true
+  showNodes: true,
 });
 debug.draw(); // Desenha tudo (polígonos, arestas, etc.)
 ```
@@ -253,7 +263,7 @@ const obstaclePoly = new Polygon([
   { x: 50, y: 50 },
   { x: 60, y: 50 },
   { x: 60, y: 60 },
-  { x: 50, y: 60 }
+  { x: 50, y: 60 },
 ]);
 
 // 3) Adicionar ao gerenciador
@@ -279,7 +289,7 @@ const dijkstraResult = Pathfinder.findPath({
   graph: navMesh.graph,
   start: { x: 20, y: 20 },
   end: { x: 300, y: 300 },
-  method: "DIJKSTRA"
+  method: "DIJKSTRA",
 });
 ```
 
@@ -289,51 +299,57 @@ const dijkstraResult = Pathfinder.findPath({
 
 A seguir, listamos as classes e métodos-chave (já documentados no código-fonte):
 
-1. **`NavMesh`**  
-   - `addPolygon(poly: Polygon)`: Adiciona polígono.  
-   - `buildGraph()`: Constrói grafo simples.  
-   - `buildGraphConsideringObstacles(obstacles: Polygon[])`: Constrói grafo levando em conta bloqueios.  
-   - `enableDynamicObstacles(options?)`: Inicializa o gerenciador de obstáculos.  
-   - `cloneGraph()`: Retorna cópia do grafo atual.  
-   - ...  
+1. **`NavMesh`**
 
-2. **`Polygon`**  
-   - `new Polygon(vertices, options?)`: Cria polígono.  
-   - `getBoundingBox()`, `getEdges()`, `getCenter()`, `getWidth()`.  
-   - `containsPoint(point)`.  
-   - ...  
+   - `addPolygon(poly: Polygon)`: Adiciona polígono.
+   - `buildGraph()`: Constrói grafo simples.
+   - `buildGraphConsideringObstacles(obstacles: Polygon[])`: Constrói grafo levando em conta bloqueios.
+   - `enableDynamicObstacles(options?)`: Inicializa o gerenciador de obstáculos.
+   - `cloneGraph()`: Retorna cópia do grafo atual.
+   - ...
 
-3. **`DynamicObstacleManager`**  
-   - `addObstacle(obstacle: Polygon)`, `removeObstacle(id: string)`, `updateObstacle(id: string, newObstacle: Polygon)`.  
+2. **`Polygon`**
+
+   - `new Polygon(vertices, options?)`: Cria polígono.
+   - `getBoundingBox()`, `getEdges()`, `getCenter()`, `getWidth()`.
+   - `containsPoint(point)`.
+   - ...
+
+3. **`DynamicObstacleManager`**
+
+   - `addObstacle(obstacle: Polygon)`, `removeObstacle(id: string)`, `updateObstacle(id: string, newObstacle: Polygon)`.
    - Mantém índice espacial via `SpatialGrid`.
 
-4. **`LayerSystem`**  
-   - `registerLayer(name: string, config: Object)`.  
-   - `addFilter(layer: string, type: string, condition: Function, scope?)`.  
-   - `applyFilters(nodes: any[], context?)`.  
+4. **`LayerSystem`**
 
-5. **`Graph`**  
-   - `nodes: {id, polygon}[]`.  
-   - `adjList: Map<nodeId, Array<{nodeId, peso}>>`.  
+   - `registerLayer(name: string, config: Object)`.
+   - `addFilter(layer: string, type: string, condition: Function, scope?)`.
+   - `applyFilters(nodes: any[], context?)`.
+
+5. **`Graph`**
+
+   - `nodes: {id, polygon}[]`.
+   - `adjList: Map<nodeId, Array<{nodeId, peso}>>`.
    - `getAdjacencias(nodeId)`, `getNode(nodeId)`, `clone()`.
 
-6. **`Pathfinder`**  
-   - `findPath(config)`: Principal método, aceita `A_STAR`, `DIJKSTRA`, `BFS`, `DFS`.  
-   - Diversos callbacks de customização (heuristic, costFunction, validator).  
+6. **`Pathfinder`**
 
-7. **`DebugVisualizer`**  
-   - `draw()`, `toggle(enabled)`, `captureDebugData()`.  
+   - `findPath(config)`: Principal método, aceita `A_STAR`, `DIJKSTRA`, `BFS`, `DFS`.
+   - Diversos callbacks de customização (heuristic, costFunction, validator).
+
+7. **`DebugVisualizer`**
+   - `draw()`, `toggle(enabled)`, `captureDebugData()`.
    - `highlightAccessibleAreas(profile)`, `drawAllAgentPaths()`, etc.
 
 ---
 
 ## **Boas Práticas e Dicas**
 
-1. **Valide sempre seus polígonos**: verifique se não há interseções indesejadas ou vértices desalinhados.  
-2. **Use camadas com cautela**: As camadas podem aumentar a complexidade, então utilize filtros somente quando necessário.  
-3. **Otimize o Pathfinding**: Se possível, defina uma boa `heuristic` para o A\* e uma `costFunction` coerente com o custo real de travessia do seu ambiente.  
-4. **Obstáculos Dinâmicos**: Gerenciar muitos obstáculos pode impactar o desempenho. Se tiver muitos, considere otimizar o `cellSize` do `SpatialGrid`.  
-5. **DebugVisualizer**: Em produção, você pode desativar (`toggle(false)`) para economizar recursos de desenho.  
+1. **Valide sempre seus polígonos**: verifique se não há interseções indesejadas ou vértices desalinhados.
+2. **Use camadas com cautela**: As camadas podem aumentar a complexidade, então utilize filtros somente quando necessário.
+3. **Otimize o Pathfinding**: Se possível, defina uma boa `heuristic` para o A\* e uma `costFunction` coerente com o custo real de travessia do seu ambiente.
+4. **Obstáculos Dinâmicos**: Gerenciar muitos obstáculos pode impactar o desempenho. Se tiver muitos, considere otimizar o `cellSize` do `SpatialGrid`.
+5. **DebugVisualizer**: Em produção, você pode desativar (`toggle(false)`) para economizar recursos de desenho.
 6. **Agentes**: Se estiver usando `AgentManager`, mantenha cada agente com perfil de camada e custo condizentes com seu tipo (por exemplo, “veículo grande” vs. “humano”).
 
 ---

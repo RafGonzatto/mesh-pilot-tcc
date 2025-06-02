@@ -1,241 +1,1093 @@
-<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>mesh-pilot</title><meta name="description" content="Documentation for mesh-pilot"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="assets/icons.svg#icon-search"></use></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div><div class="field"><div id="tsd-toolbar-links"></div></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">mesh-pilot</a></div><div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h2>mesh-pilot</h2></div><div class="tsd-panel tsd-typography"><a id="md:guia-completo-da-biblioteca-de-navegação-e-pathfinding" class="tsd-anchor"></a><h1><a href="#md:guia-completo-da-biblioteca-de-navegação-e-pathfinding"><strong>Guia Completo da Biblioteca de Navegação e Pathfinding</strong></a></h1><p>Bem-vindo(a) ao guia oficial desta biblioteca de navegação e pathfinding em 2D. Aqui você encontra todas as informações para instalar, configurar, utilizar e entender seus principais componentes. O objetivo é fornecer um sistema robusto de <strong>NavMesh</strong> (malha de navegação), <strong>pathfinding</strong> (busca de caminhos), <strong>obstáculos dinâmicos</strong>, <strong>camadas</strong> (layers), e <strong>visualização de debug</strong>, tornando o desenvolvimento de aplicações 2D mais simples e eficiente.</p>
-<hr>
-<a id="md:índice" class="tsd-anchor"></a><h2><a href="#md:índice"><strong>Índice</strong></a></h2><ol>
-<li><a href="#md:proposta-geral-da-biblioteca">Proposta Geral da Biblioteca</a>  </li>
-<li><a href="#md:principais-recursos-features">Principais Recursos (Features)</a>  </li>
-<li><a href="#md:conceitos-fundamentais">Conceitos Fundamentais</a>  <ul>
-<li><a href="#md:polygons">Polygons</a>  </li>
-<li><a href="#md:navmesh-e-dynamicobstaclemanager">NavMesh e DynamicObstacleManager</a>  </li>
-<li><a href="#md:graph">Graph</a>  </li>
-<li><a href="#md:layersystem">LayerSystem</a>  </li>
-<li><a href="#md:pathfinder">Pathfinder</a>  </li>
-<li><a href="#md:debugvisualizer">DebugVisualizer</a></li>
-</ul>
-</li>
-<li><a href="#md:instalação-e-estrutura-de-pastas">Instalação e Estrutura de Pastas</a>  </li>
-<li><a href="#md:exemplo-rápido-quick-start">Exemplo Rápido (Quick Start)</a>  </li>
-<li><a href="#md:uso-avançado">Uso Avançado</a>  </li>
-<li><a href="#md:api-detalhada">API Detalhada</a>  </li>
-<li><a href="#md:boas-práticas-e-dicas">Boas Práticas e Dicas</a></li>
-</ol>
-<hr>
-<a id="md:proposta-geral-da-biblioteca" class="tsd-anchor"></a><h2><a href="#md:proposta-geral-da-biblioteca"><strong>Proposta Geral da Biblioteca</strong></a></h2><p>Esta biblioteca surgiu para <strong>facilitar a criação e manutenção de sistemas de navegação em mapas 2D</strong>, contemplando:</p>
-<ul>
-<li><strong>Detecção de caminhos</strong> em mapas complexos.</li>
-<li>Suporte a <strong>obstáculos dinâmicos</strong> e atualizações em tempo real.</li>
-<li><strong>Customização por camadas</strong> (layer system), possibilitando diferentes “tipos” de navegação.</li>
-<li>Uso de algoritmos de pathfinding <strong>clássicos</strong> (A*, Dijkstra, BFS, DFS) e extensões.</li>
-<li><strong>Visualização de debug</strong> para auxiliar no desenvolvimento.</li>
-</ul>
-<p>Os objetos centrais são <strong>NavMesh</strong> (malha de navegação) e <strong>Graph</strong> (grafo de navegação). A biblioteca gerencia esses conceitos e fornece uma série de utilitários para manusear o mapa (polígonos), encontrar caminhos (Pathfinder), e desenhar todo o processo (DebugVisualizer).</p>
-<hr>
-<a id="md:principais-recursos-features" class="tsd-anchor"></a><h2><a href="#md:principais-recursos-features"><strong>Principais Recursos (Features)</strong></a></h2><ol>
-<li><strong>Criação de Polígonos (Polygon)</strong> com métodos utilitários (cálculo de bounding box, verificação de ponto dentro, etc.).</li>
-<li><strong>NavMesh</strong> com suporte a:<ul>
-<li>Construção e gerenciamento de polígonos.</li>
-<li>Construção de grafos básicos ou com obstáculos dinâmicos.</li>
-<li>Camadas (Layers) para filtrar ou atribuir custos diferenciados.</li>
-<li>Sistema de eventos para reagir a alterações.</li>
-</ul>
-</li>
-<li><strong>Graph</strong> (grafo de navegação) abstrato, para representar nós e arestas.</li>
-<li><strong>DynamicObstacleManager</strong> para adicionar, remover ou mover obstáculos em tempo real, atualizando o grafo.</li>
-<li><strong>LayerSystem</strong> para registro de camadas, aplicação de filtros de INCLUSÃO, EXCLUSÃO e modificadores de CUSTO.</li>
-<li><strong>Pathfinder</strong> com diversos algoritmos:<ul>
-<li>A* (A_Star)</li>
-<li>Dijkstra</li>
-<li>BFS</li>
-<li>DFS</li>
-</ul>
-</li>
-<li><strong>DebugVisualizer</strong> para desenhar, inspecionar e depurar facilmente:<ul>
-<li>Polígonos</li>
-<li>Arestas</li>
-<li>Obstáculos</li>
-<li>Caminhos</li>
-<li>Nós (nodes)</li>
-<li>Rótulos, camadas, acessibilidade</li>
-</ul>
-</li>
-<li><strong>EventEmitter</strong> base para gerenciamento de eventos globais e específicos.</li>
-</ol>
-<hr>
-<a id="md:conceitos-fundamentais" class="tsd-anchor"></a><h2><a href="#md:conceitos-fundamentais"><strong>Conceitos Fundamentais</strong></a></h2><a id="md:31-polygons" class="tsd-anchor"></a><h3><a href="#md:31-polygons">3.1 <strong>Polygons</strong></a></h3><ul>
-<li>Representam <strong>áreas</strong> 2D (por exemplo, células de um terreno ou qualquer região).  </li>
-<li>Possuem métodos para:<ul>
-<li><strong><code>getBoundingBox()</code></strong>: Retorna o retângulo mínimo que envolve o polígono.</li>
-<li><strong><code>getEdges()</code></strong>: Lista de arestas (segmentos) do polígono.</li>
-<li><strong><code>getCenter()</code></strong>: Centro geométrico (média das coordenadas).</li>
-<li><strong><code>containsPoint(point)</code></strong>: Verifica se um ponto (x,y) está dentro do polígono.</li>
-<li><strong><code>getWidth()</code></strong>: Retorna a largura do polígono com base na bounding box.</li>
-<li><strong><code>allowedLayers</code></strong> e <strong><code>layer</code></strong>: Define em qual camada o polígono se encontra e quais camadas ele permite.</li>
-</ul>
-</li>
-</ul>
-<a id="md:32-navmesh-e-dynamicobstaclemanager" class="tsd-anchor"></a><h3><a href="#md:32-navmesh-e-dynamicobstaclemanager">3.2 <strong>NavMesh e DynamicObstacleManager</strong></a></h3><ul>
-<li><strong>NavMesh</strong> é a classe principal que gerencia os <strong>polígonos</strong> e constrói um <strong>Graph</strong> de navegação.  </li>
-<li>Permite métodos como:<ul>
-<li><strong><code>addPolygon(poly)</code></strong>: Adiciona um polígono à malha.</li>
-<li><strong><code>buildGraph()</code></strong>: Constrói o grafo de adjacências sem considerar obstáculos.</li>
-<li><strong><code>buildGraphConsideringObstacles(obstacles)</code></strong>: Constrói o grafo considerando uma lista de obstáculos (bloqueios).  </li>
-<li><strong><code>enableDynamicObstacles()</code></strong>: Habilita o sistema de obstáculos dinâmicos.  </li>
-<li><strong><code>cloneGraph()</code></strong>: Retorna uma cópia do grafo atual.</li>
-</ul>
-</li>
-<li><strong>DynamicObstacleManager</strong> é o componente que lida com obstáculos <strong>em tempo real</strong>:<ul>
-<li><strong><code>addObstacle(obstacle: Polygon)</code></strong>: Adiciona um novo obstáculo e atualiza o grafo.</li>
-<li><strong><code>removeObstacle(obstacleId)</code></strong>: Remove um obstáculo, liberando arestas do grafo.</li>
-<li><strong><code>updateObstacle(obstacleId, newObstacle)</code></strong>: Atualiza forma/posição de um obstáculo.</li>
-<li>Possui um <strong>índice espacial</strong> (SpatialGrid) para consultas rápidas.</li>
-</ul>
-</li>
-</ul>
-<a id="md:33-graph" class="tsd-anchor"></a><h3><a href="#md:33-graph">3.3 <strong>Graph</strong></a></h3><ul>
-<li>Estrutura de <strong>nós</strong> ({id, polygon}) e <strong>arestas</strong> ([idA, idB, peso]).  </li>
-<li>Método principal:<ul>
-<li><strong><code>getAdjacencias(nodeId)</code></strong>: Retorna as arestas ligadas a um nó (vizinhança).</li>
-<li><strong><code>getNode(nodeId)</code></strong>: Acessa o nó pelo ID.</li>
-<li><strong><code>clone()</code></strong>: Gera uma cópia profunda (Deep Clone) do grafo.</li>
-</ul>
-</li>
-</ul>
-<a id="md:34-layersystem" class="tsd-anchor"></a><h3><a href="#md:34-layersystem">3.4 <strong>LayerSystem</strong></a></h3><ul>
-<li>Gerencia <strong>camadas</strong> (por exemplo, “default”, “agua”, “terra”, “subterrâneo” etc.).  </li>
-<li>Permite <strong>filtros</strong> de 3 tipos:<ol>
-<li><strong>INCLUSION</strong>: Nó deve satisfazer a condição para ser incluso.</li>
-<li><strong>EXCLUSION</strong>: Nó é excluído se satisfizer a condição.</li>
-<li><strong>COST_MODIFIER</strong>: Ajusta o custo de travessia (ex.: caminhar na areia pode custar 2x).</li>
-</ol>
-</li>
-<li>Exemplo de uso:<pre><code class="language-js"><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">registerLayer</span><span class="hl-1">(</span><span class="hl-3">&quot;lava&quot;</span><span class="hl-1">, { </span><span class="hl-0">color:</span><span class="hl-1"> </span><span class="hl-3">&quot;#ff0000&quot;</span><span class="hl-1">, </span><span class="hl-0">traversalCost:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> });</span><br/><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">addFilter</span><span class="hl-1">(</span><span class="hl-3">&quot;lava&quot;</span><span class="hl-1">, </span><span class="hl-0">LayerSystem</span><span class="hl-1">.</span><span class="hl-5">FILTER_TYPES</span><span class="hl-1">.</span><span class="hl-5">EXCLUSION</span><span class="hl-1">, (</span><span class="hl-0">node</span><span class="hl-1">, </span><span class="hl-0">ctx</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-7">return</span><span class="hl-1"> </span><span class="hl-0">ctx</span><span class="hl-1">.</span><span class="hl-0">agentType</span><span class="hl-1"> !== </span><span class="hl-3">&quot;fire&quot;</span><span class="hl-1">; </span><span class="hl-8">// exclui se o agente não for de fogo</span><br/><span class="hl-1">});</span>
+<!DOCTYPE html>
+<html class="default" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <title>mesh-pilot</title>
+    <meta name="description" content="Documentation for mesh-pilot" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="stylesheet" href="assets/highlight.css" />
+    <script defer src="assets/main.js"></script>
+    <script async src="assets/icons.js" id="tsd-icons-script"></script>
+    <script async src="assets/search.js" id="tsd-search-script"></script>
+    <script async src="assets/navigation.js" id="tsd-nav-script"></script>
+  </head>
+  <body>
+    <script>
+      document.documentElement.dataset.theme =
+        localStorage.getItem("tsd-theme") || "os";
+      document.body.style.display = "none";
+      setTimeout(
+        () =>
+          app ? app.showPage() : document.body.style.removeProperty("display"),
+        500
+      );
+    </script>
+    <header class="tsd-page-toolbar">
+      <div class="tsd-toolbar-contents container">
+        <div class="table-cell" id="tsd-search" data-base=".">
+          <div class="field">
+            <label
+              for="tsd-search-field"
+              class="tsd-widget tsd-toolbar-icon search no-caption"
+              ><svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <use href="assets/icons.svg#icon-search"></use></svg></label
+            ><input type="text" id="tsd-search-field" aria-label="Search" />
+          </div>
+          <div class="field"><div id="tsd-toolbar-links"></div></div>
+          <ul class="results">
+            <li class="state loading">Preparing search index...</li>
+            <li class="state failure">The search index is not available</li>
+          </ul>
+          <a href="index.html" class="title">mesh-pilot</a>
+        </div>
+        <div class="table-cell" id="tsd-widgets">
+          <a
+            href="#"
+            class="tsd-widget tsd-toolbar-icon menu no-caption"
+            data-toggle="menu"
+            aria-label="Menu"
+            ><svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <use href="assets/icons.svg#icon-menu"></use></svg
+          ></a>
+        </div>
+      </div>
+    </header>
+    <div class="container container-main">
+      <div class="col-content">
+        <div class="tsd-page-title"><h2>mesh-pilot</h2></div>
+        <div class="tsd-panel tsd-typography">
+          <a
+            id="md:guia-completo-da-biblioteca-de-navegação-e-pathfinding"
+            class="tsd-anchor"
+          ></a>
+          <h1>
+            <a href="#md:guia-completo-da-biblioteca-de-navegação-e-pathfinding"
+              ><strong
+                >Guia Completo da Biblioteca de Navegação e Pathfinding</strong
+              ></a
+            >
+          </h1>
+          <p>
+            Bem-vindo(a) ao guia oficial desta biblioteca de navegação e
+            pathfinding em 2D. Aqui você encontra todas as informações para
+            instalar, configurar, utilizar e entender seus principais
+            componentes. O objetivo é fornecer um sistema robusto de
+            <strong>NavMesh</strong> (malha de navegação),
+            <strong>pathfinding</strong> (busca de caminhos),
+            <strong>obstáculos dinâmicos</strong>,
+            <strong>camadas</strong> (layers), e
+            <strong>visualização de debug</strong>, tornando o desenvolvimento
+            de aplicações 2D mais simples e eficiente.
+          </p>
+          <hr />
+          <a id="md:índice" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:índice"><strong>Índice</strong></a>
+          </h2>
+          <ol>
+            <li>
+              <a href="#md:proposta-geral-da-biblioteca"
+                >Proposta Geral da Biblioteca</a
+              >
+            </li>
+            <li>
+              <a href="#md:principais-recursos-features"
+                >Principais Recursos (Features)</a
+              >
+            </li>
+            <li>
+              <a href="#md:conceitos-fundamentais">Conceitos Fundamentais</a>
+              <ul>
+                <li><a href="#md:polygons">Polygons</a></li>
+                <li>
+                  <a href="#md:navmesh-e-dynamicobstaclemanager"
+                    >NavMesh e DynamicObstacleManager</a
+                  >
+                </li>
+                <li><a href="#md:graph">Graph</a></li>
+                <li><a href="#md:layersystem">LayerSystem</a></li>
+                <li><a href="#md:pathfinder">Pathfinder</a></li>
+                <li><a href="#md:debugvisualizer">DebugVisualizer</a></li>
+              </ul>
+            </li>
+            <li>
+              <a href="#md:instalação-e-estrutura-de-pastas"
+                >Instalação e Estrutura de Pastas</a
+              >
+            </li>
+            <li>
+              <a href="#md:exemplo-rápido-quick-start"
+                >Exemplo Rápido (Quick Start)</a
+              >
+            </li>
+            <li><a href="#md:uso-avançado">Uso Avançado</a></li>
+            <li><a href="#md:api-detalhada">API Detalhada</a></li>
+            <li>
+              <a href="#md:boas-práticas-e-dicas">Boas Práticas e Dicas</a>
+            </li>
+          </ol>
+          <hr />
+          <a id="md:proposta-geral-da-biblioteca" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:proposta-geral-da-biblioteca"
+              ><strong>Proposta Geral da Biblioteca</strong></a
+            >
+          </h2>
+          <p>
+            Esta biblioteca surgiu para
+            <strong
+              >facilitar a criação e manutenção de sistemas de navegação em
+              mapas 2D</strong
+            >, contemplando:
+          </p>
+          <ul>
+            <li><strong>Detecção de caminhos</strong> em mapas complexos.</li>
+            <li>
+              Suporte a <strong>obstáculos dinâmicos</strong> e atualizações em
+              tempo real.
+            </li>
+            <li>
+              <strong>Customização por camadas</strong> (layer system),
+              possibilitando diferentes “tipos” de navegação.
+            </li>
+            <li>
+              Uso de algoritmos de pathfinding <strong>clássicos</strong> (A*,
+              Dijkstra, BFS, DFS) e extensões.
+            </li>
+            <li>
+              <strong>Visualização de debug</strong> para auxiliar no
+              desenvolvimento.
+            </li>
+          </ul>
+          <p>
+            Os objetos centrais são <strong>NavMesh</strong> (malha de
+            navegação) e <strong>Graph</strong> (grafo de navegação). A
+            biblioteca gerencia esses conceitos e fornece uma série de
+            utilitários para manusear o mapa (polígonos), encontrar caminhos
+            (Pathfinder), e desenhar todo o processo (DebugVisualizer).
+          </p>
+          <hr />
+          <a id="md:principais-recursos-features" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:principais-recursos-features"
+              ><strong>Principais Recursos (Features)</strong></a
+            >
+          </h2>
+          <ol>
+            <li>
+              <strong>Criação de Polígonos (Polygon)</strong> com métodos
+              utilitários (cálculo de bounding box, verificação de ponto dentro,
+              etc.).
+            </li>
+            <li>
+              <strong>NavMesh</strong> com suporte a:
+              <ul>
+                <li>Construção e gerenciamento de polígonos.</li>
+                <li>
+                  Construção de grafos básicos ou com obstáculos dinâmicos.
+                </li>
+                <li>
+                  Camadas (Layers) para filtrar ou atribuir custos
+                  diferenciados.
+                </li>
+                <li>Sistema de eventos para reagir a alterações.</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Graph</strong> (grafo de navegação) abstrato, para
+              representar nós e arestas.
+            </li>
+            <li>
+              <strong>DynamicObstacleManager</strong> para adicionar, remover ou
+              mover obstáculos em tempo real, atualizando o grafo.
+            </li>
+            <li>
+              <strong>LayerSystem</strong> para registro de camadas, aplicação
+              de filtros de INCLUSÃO, EXCLUSÃO e modificadores de CUSTO.
+            </li>
+            <li>
+              <strong>Pathfinder</strong> com diversos algoritmos:
+              <ul>
+                <li>A* (A_Star)</li>
+                <li>Dijkstra</li>
+                <li>BFS</li>
+                <li>DFS</li>
+              </ul>
+            </li>
+            <li>
+              <strong>DebugVisualizer</strong> para desenhar, inspecionar e
+              depurar facilmente:
+              <ul>
+                <li>Polígonos</li>
+                <li>Arestas</li>
+                <li>Obstáculos</li>
+                <li>Caminhos</li>
+                <li>Nós (nodes)</li>
+                <li>Rótulos, camadas, acessibilidade</li>
+              </ul>
+            </li>
+            <li>
+              <strong>EventEmitter</strong> base para gerenciamento de eventos
+              globais e específicos.
+            </li>
+          </ol>
+          <hr />
+          <a id="md:conceitos-fundamentais" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:conceitos-fundamentais"
+              ><strong>Conceitos Fundamentais</strong></a
+            >
+          </h2>
+          <a id="md:31-polygons" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:31-polygons">3.1 <strong>Polygons</strong></a>
+          </h3>
+          <ul>
+            <li>
+              Representam <strong>áreas</strong> 2D (por exemplo, células de um
+              terreno ou qualquer região).
+            </li>
+            <li>
+              Possuem métodos para:
+              <ul>
+                <li>
+                  <strong><code>getBoundingBox()</code></strong
+                  >: Retorna o retângulo mínimo que envolve o polígono.
+                </li>
+                <li>
+                  <strong><code>getEdges()</code></strong
+                  >: Lista de arestas (segmentos) do polígono.
+                </li>
+                <li>
+                  <strong><code>getCenter()</code></strong
+                  >: Centro geométrico (média das coordenadas).
+                </li>
+                <li>
+                  <strong><code>containsPoint(point)</code></strong
+                  >: Verifica se um ponto (x,y) está dentro do polígono.
+                </li>
+                <li>
+                  <strong><code>getWidth()</code></strong
+                  >: Retorna a largura do polígono com base na bounding box.
+                </li>
+                <li>
+                  <strong><code>allowedLayers</code></strong> e
+                  <strong><code>layer</code></strong
+                  >: Define em qual camada o polígono se encontra e quais
+                  camadas ele permite.
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <a id="md:32-navmesh-e-dynamicobstaclemanager" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:32-navmesh-e-dynamicobstaclemanager"
+              >3.2 <strong>NavMesh e DynamicObstacleManager</strong></a
+            >
+          </h3>
+          <ul>
+            <li>
+              <strong>NavMesh</strong> é a classe principal que gerencia os
+              <strong>polígonos</strong> e constrói um <strong>Graph</strong> de
+              navegação.
+            </li>
+            <li>
+              Permite métodos como:
+              <ul>
+                <li>
+                  <strong><code>addPolygon(poly)</code></strong
+                  >: Adiciona um polígono à malha.
+                </li>
+                <li>
+                  <strong><code>buildGraph()</code></strong
+                  >: Constrói o grafo de adjacências sem considerar obstáculos.
+                </li>
+                <li>
+                  <strong
+                    ><code
+                      >buildGraphConsideringObstacles(obstacles)</code
+                    ></strong
+                  >: Constrói o grafo considerando uma lista de obstáculos
+                  (bloqueios).
+                </li>
+                <li>
+                  <strong><code>enableDynamicObstacles()</code></strong
+                  >: Habilita o sistema de obstáculos dinâmicos.
+                </li>
+                <li>
+                  <strong><code>cloneGraph()</code></strong
+                  >: Retorna uma cópia do grafo atual.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <strong>DynamicObstacleManager</strong> é o componente que lida
+              com obstáculos <strong>em tempo real</strong>:
+              <ul>
+                <li>
+                  <strong><code>addObstacle(obstacle: Polygon)</code></strong
+                  >: Adiciona um novo obstáculo e atualiza o grafo.
+                </li>
+                <li>
+                  <strong><code>removeObstacle(obstacleId)</code></strong
+                  >: Remove um obstáculo, liberando arestas do grafo.
+                </li>
+                <li>
+                  <strong
+                    ><code
+                      >updateObstacle(obstacleId, newObstacle)</code
+                    ></strong
+                  >: Atualiza forma/posição de um obstáculo.
+                </li>
+                <li>
+                  Possui um <strong>índice espacial</strong> (SpatialGrid) para
+                  consultas rápidas.
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <a id="md:33-graph" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:33-graph">3.3 <strong>Graph</strong></a>
+          </h3>
+          <ul>
+            <li>
+              Estrutura de <strong>nós</strong> ({id, polygon}) e
+              <strong>arestas</strong> ([idA, idB, peso]).
+            </li>
+            <li>
+              Método principal:
+              <ul>
+                <li>
+                  <strong><code>getAdjacencias(nodeId)</code></strong
+                  >: Retorna as arestas ligadas a um nó (vizinhança).
+                </li>
+                <li>
+                  <strong><code>getNode(nodeId)</code></strong
+                  >: Acessa o nó pelo ID.
+                </li>
+                <li>
+                  <strong><code>clone()</code></strong
+                  >: Gera uma cópia profunda (Deep Clone) do grafo.
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <a id="md:34-layersystem" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:34-layersystem">3.4 <strong>LayerSystem</strong></a>
+          </h3>
+          <ul>
+            <li>
+              Gerencia <strong>camadas</strong> (por exemplo, “default”, “agua”,
+              “terra”, “subterrâneo” etc.).
+            </li>
+            <li>
+              Permite <strong>filtros</strong> de 3 tipos:
+              <ol>
+                <li>
+                  <strong>INCLUSION</strong>: Nó deve satisfazer a condição para
+                  ser incluso.
+                </li>
+                <li>
+                  <strong>EXCLUSION</strong>: Nó é excluído se satisfizer a
+                  condição.
+                </li>
+                <li>
+                  <strong>COST_MODIFIER</strong>: Ajusta o custo de travessia
+                  (ex.: caminhar na areia pode custar 2x).
+                </li>
+              </ol>
+            </li>
+            <li>
+              Exemplo de uso:
+              <pre><code class="language-js"><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">registerLayer</span><span class="hl-1">(</span><span class="hl-3">&quot;lava&quot;</span><span class="hl-1">, { </span><span class="hl-0">color:</span><span class="hl-1"> </span><span class="hl-3">&quot;#ff0000&quot;</span><span class="hl-1">, </span><span class="hl-0">traversalCost:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> });</span><br/><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">addFilter</span><span class="hl-1">(</span><span class="hl-3">&quot;lava&quot;</span><span class="hl-1">, </span><span class="hl-0">LayerSystem</span><span class="hl-1">.</span><span class="hl-5">FILTER_TYPES</span><span class="hl-1">.</span><span class="hl-5">EXCLUSION</span><span class="hl-1">, (</span><span class="hl-0">node</span><span class="hl-1">, </span><span class="hl-0">ctx</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-7">return</span><span class="hl-1"> </span><span class="hl-0">ctx</span><span class="hl-1">.</span><span class="hl-0">agentType</span><span class="hl-1"> !== </span><span class="hl-3">&quot;fire&quot;</span><span class="hl-1">; </span><span class="hl-8">// exclui se o agente não for de fogo</span><br/><span class="hl-1">});</span>
 </code><button>Copy</button></pre>
-</li>
-</ul>
-<a id="md:35-pathfinder" class="tsd-anchor"></a><h3><a href="#md:35-pathfinder">3.5 <strong>Pathfinder</strong></a></h3><ul>
-<li>Fornece métodos <strong>estáticos</strong> para encontrar caminhos em um grafo.  </li>
-<li>Suporta:<ul>
-<li><strong>A*</strong> (A_STAR)</li>
-<li><strong>Dijkstra</strong></li>
-<li><strong>BFS</strong></li>
-<li><strong>DFS</strong></li>
-</ul>
-</li>
-<li>Cada método aceita configurações como:<ul>
-<li><code>heuristic</code>, <code>costFunction</code>, <code>validator</code> (funções callback).</li>
-<li><code>maxIterations</code>, <code>partialPath</code>, etc.</li>
-</ul>
-</li>
-<li>Exemplo:<pre><code class="language-js"><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">pathResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">350</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;A*&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-2">heuristic</span><span class="hl-0">:</span><span class="hl-1"> (</span><span class="hl-0">a</span><span class="hl-1">, </span><span class="hl-0">b</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> </span><span class="hl-0">Math</span><span class="hl-1">.</span><span class="hl-2">hypot</span><span class="hl-1">(</span><span class="hl-0">a</span><span class="hl-1">.</span><span class="hl-0">x</span><span class="hl-1"> - </span><span class="hl-0">b</span><span class="hl-1">.</span><span class="hl-0">x</span><span class="hl-1">, </span><span class="hl-0">a</span><span class="hl-1">.</span><span class="hl-0">y</span><span class="hl-1"> - </span><span class="hl-0">b</span><span class="hl-1">.</span><span class="hl-0">y</span><span class="hl-1">),</span><br/><span class="hl-1">});</span>
+            </li>
+          </ul>
+          <a id="md:35-pathfinder" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:35-pathfinder">3.5 <strong>Pathfinder</strong></a>
+          </h3>
+          <ul>
+            <li>
+              Fornece métodos <strong>estáticos</strong> para encontrar caminhos
+              em um grafo.
+            </li>
+            <li>
+              Suporta:
+              <ul>
+                <li><strong>A*</strong> (A_STAR)</li>
+                <li><strong>Dijkstra</strong></li>
+                <li><strong>BFS</strong></li>
+                <li><strong>DFS</strong></li>
+              </ul>
+            </li>
+            <li>
+              Cada método aceita configurações como:
+              <ul>
+                <li>
+                  <code>heuristic</code>, <code>costFunction</code>,
+                  <code>validator</code> (funções callback).
+                </li>
+                <li>
+                  <code>maxIterations</code>, <code>partialPath</code>, etc.
+                </li>
+              </ul>
+            </li>
+            <li>
+              Exemplo:
+              <pre><code class="language-js"><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">pathResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">350</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;A*&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-2">heuristic</span><span class="hl-0">:</span><span class="hl-1"> (</span><span class="hl-0">a</span><span class="hl-1">, </span><span class="hl-0">b</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> </span><span class="hl-0">Math</span><span class="hl-1">.</span><span class="hl-2">hypot</span><span class="hl-1">(</span><span class="hl-0">a</span><span class="hl-1">.</span><span class="hl-0">x</span><span class="hl-1"> - </span><span class="hl-0">b</span><span class="hl-1">.</span><span class="hl-0">x</span><span class="hl-1">, </span><span class="hl-0">a</span><span class="hl-1">.</span><span class="hl-0">y</span><span class="hl-1"> - </span><span class="hl-0">b</span><span class="hl-1">.</span><span class="hl-0">y</span><span class="hl-1">),</span><br/><span class="hl-1">});</span>
 </code><button>Copy</button></pre>
-</li>
-</ul>
-<a id="md:36-debugvisualizer" class="tsd-anchor"></a><h3><a href="#md:36-debugvisualizer">3.6 <strong>DebugVisualizer</strong></a></h3><ul>
-<li>Classe que desenha todo o conteúdo no <strong>Canvas</strong>:<ul>
-<li>Polígonos, arestas, obstáculos, caminho atual, nós, grid, rótulos etc.</li>
-</ul>
-</li>
-<li>Simplifica o debug, pois exibe em <strong>tempo real</strong> tudo que acontece.</li>
-<li>Principais métodos:<ul>
-<li><strong><code>draw()</code></strong>: Faz o desenho completo.</li>
-<li><strong><code>toggle(enabled)</code></strong>: Liga/desliga a visualização.</li>
-<li><strong><code>captureDebugData()</code></strong>: Retorna dados de estado e logs de eventos.</li>
-<li><strong><code>highlightAccessibleAreas(profile)</code></strong>: Demonstra quais áreas são acessíveis a certo tipo de agente.</li>
-<li><strong><code>drawAllAgentPaths()</code></strong>: Desenha caminhos de todos os agentes ativos.</li>
-</ul>
-</li>
-</ul>
-<hr>
-<a id="md:instalação-e-estrutura-de-pastas" class="tsd-anchor"></a><h2><a href="#md:instalação-e-estrutura-de-pastas"><strong>Instalação e Estrutura de Pastas</strong></a></h2><p>A estrutura das pastas é:</p>
-<pre><code><span class="hl-0">src</span><span class="hl-1">/</span><br/><span class="hl-1">  </span><span class="hl-0">navmesh</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">EventEmitter</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">NavMesh</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">Polygon</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">DynamicObstacleManager</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">LayerSystem</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">pathfinding</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">Graph</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">AgentManager</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">debug</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">DebugVisualizer</span><span class="hl-1">.</span><span class="hl-0">js</span>
+            </li>
+          </ul>
+          <a id="md:36-debugvisualizer" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:36-debugvisualizer"
+              >3.6 <strong>DebugVisualizer</strong></a
+            >
+          </h3>
+          <ul>
+            <li>
+              Classe que desenha todo o conteúdo no <strong>Canvas</strong>:
+              <ul>
+                <li>
+                  Polígonos, arestas, obstáculos, caminho atual, nós, grid,
+                  rótulos etc.
+                </li>
+              </ul>
+            </li>
+            <li>
+              Simplifica o debug, pois exibe em <strong>tempo real</strong> tudo
+              que acontece.
+            </li>
+            <li>
+              Principais métodos:
+              <ul>
+                <li>
+                  <strong><code>draw()</code></strong
+                  >: Faz o desenho completo.
+                </li>
+                <li>
+                  <strong><code>toggle(enabled)</code></strong
+                  >: Liga/desliga a visualização.
+                </li>
+                <li>
+                  <strong><code>captureDebugData()</code></strong
+                  >: Retorna dados de estado e logs de eventos.
+                </li>
+                <li>
+                  <strong><code>highlightAccessibleAreas(profile)</code></strong
+                  >: Demonstra quais áreas são acessíveis a certo tipo de
+                  agente.
+                </li>
+                <li>
+                  <strong><code>drawAllAgentPaths()</code></strong
+                  >: Desenha caminhos de todos os agentes ativos.
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <hr />
+          <a id="md:instalação-e-estrutura-de-pastas" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:instalação-e-estrutura-de-pastas"
+              ><strong>Instalação e Estrutura de Pastas</strong></a
+            >
+          </h2>
+          <p>A estrutura das pastas é:</p>
+          <pre><code><span class="hl-0">src</span><span class="hl-1">/</span><br/><span class="hl-1">  </span><span class="hl-0">navmesh</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">EventEmitter</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">NavMesh</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">Polygon</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">DynamicObstacleManager</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">LayerSystem</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">pathfinding</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">Graph</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    </span><span class="hl-0">AgentManager</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">debug</span><span class="hl-1">/</span><br/><span class="hl-1">    </span><span class="hl-0">DebugVisualizer</span><span class="hl-1">.</span><span class="hl-0">js</span>
 </code><button>Copy</button></pre>
-<a id="md:41-instalação" class="tsd-anchor"></a><h2><a href="#md:41-instalação">4.1 <strong>Instalação</strong></a></h2><p><strong>Via npm</strong>:</p>
-<pre><code class="language-bash"><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-3">install</span><span class="hl-1"> </span><span class="hl-3">my-ia-library</span>
+          <a id="md:41-instalação" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:41-instalação">4.1 <strong>Instalação</strong></a>
+          </h2>
+          <p><strong>Via npm</strong>:</p>
+          <pre><code class="language-bash"><span class="hl-2">npm</span><span class="hl-1"> </span><span class="hl-3">install</span><span class="hl-1"> </span><span class="hl-3">mesh-pilot</span>
 </code><button>Copy</button></pre>
-<p><strong>Manual/local</strong>:</p>
-<ul>
-<li>Baixe ou clone este repositório</li>
-<li>Copie a pasta my-ia-library para o seu projeto</li>
-<li>Importe diretamente os arquivos de ./src/index.js no seu código.</li>
-</ul>
-<hr>
-<a id="md:exemplo-rápido-quick-start" class="tsd-anchor"></a><h2><a href="#md:exemplo-rápido-quick-start"><strong>Exemplo Rápido (Quick Start)</strong></a></h2><p>Suponha que você tenha um canvas em HTML e queira criar uma malha de navegação simples:</p>
-<pre><code class="language-js"><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">NavMesh</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./navmesh/NavMesh.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">Polygon</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./navmesh/Polygon.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">DebugVisualizer</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./debug/DebugVisualizer.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">Pathfinder</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./pathfinding/Pathfinder.js&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-8">// 1) Crie o NavMesh</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">navMesh</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">NavMesh</span><span class="hl-1">(</span><span class="hl-6">true</span><span class="hl-1">); </span><span class="hl-8">// enableLogs = true (opcional)</span><br/><br/><span class="hl-8">// 2) Registre camadas (opcional)</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">registerLayer</span><span class="hl-1">(</span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1">, { </span><span class="hl-0">color:</span><span class="hl-1"> </span><span class="hl-3">&quot;#ff00ff&quot;</span><span class="hl-1">, </span><span class="hl-0">traversalCost:</span><span class="hl-1"> </span><span class="hl-4">2</span><span class="hl-1"> });</span><br/><br/><span class="hl-8">// 3) Adicione alguns polígonos</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">poly1</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">Polygon</span><span class="hl-1">([</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">100</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">100</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">80</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">80</span><span class="hl-1"> }</span><br/><span class="hl-1">], { </span><span class="hl-0">layer:</span><span class="hl-1"> </span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1"> });</span><br/><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">addPolygon</span><span class="hl-1">(</span><span class="hl-0">poly1</span><span class="hl-1">);</span><br/><br/><span class="hl-8">// 4) Construa o grafo (sem obstáculos inicialmente)</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">buildGraph</span><span class="hl-1">();</span><br/><br/><span class="hl-8">// 5) Exemplo: Encontrar caminho entre 2 pontos</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">pathResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph:</span><span class="hl-1"> </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">12</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">12</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">90</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">70</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;A*&quot;</span><br/><span class="hl-1">});</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-2">log</span><span class="hl-1">(</span><span class="hl-3">&quot;Path:&quot;</span><span class="hl-1">, </span><span class="hl-0">pathResult</span><span class="hl-1">.</span><span class="hl-0">path</span><span class="hl-1">, </span><span class="hl-3">&quot;Distance:&quot;</span><span class="hl-1">, </span><span class="hl-0">pathResult</span><span class="hl-1">.</span><span class="hl-0">distance</span><span class="hl-1">);</span><br/><br/><span class="hl-8">// 6) Visualizar no canvas</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">canvas</span><span class="hl-1"> = </span><span class="hl-0">document</span><span class="hl-1">.</span><span class="hl-2">getElementById</span><span class="hl-1">(</span><span class="hl-3">&quot;myCanvas&quot;</span><span class="hl-1">);</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">ctx</span><span class="hl-1"> = </span><span class="hl-0">canvas</span><span class="hl-1">.</span><span class="hl-2">getContext</span><span class="hl-1">(</span><span class="hl-3">&quot;2d&quot;</span><span class="hl-1">);</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">debug</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">DebugVisualizer</span><span class="hl-1">(</span><span class="hl-0">ctx</span><span class="hl-1">, </span><span class="hl-0">navMesh</span><span class="hl-1">, {</span><br/><span class="hl-1">  </span><span class="hl-0">showNodes:</span><span class="hl-1"> </span><span class="hl-6">true</span><br/><span class="hl-1">});</span><br/><span class="hl-0">debug</span><span class="hl-1">.</span><span class="hl-2">draw</span><span class="hl-1">(); </span><span class="hl-8">// Desenha tudo (polígonos, arestas, etc.)</span>
+          <p><strong>Manual/local</strong>:</p>
+          <ul>
+            <li>Baixe ou clone este repositório</li>
+            <li>Copie a pasta mesh-pilot para o seu projeto</li>
+            <li>
+              Importe diretamente os arquivos de ./src/index.js no seu código.
+            </li>
+          </ul>
+          <hr />
+          <a id="md:exemplo-rápido-quick-start" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:exemplo-rápido-quick-start"
+              ><strong>Exemplo Rápido (Quick Start)</strong></a
+            >
+          </h2>
+          <p>
+            Suponha que você tenha um canvas em HTML e queira criar uma malha de
+            navegação simples:
+          </p>
+          <pre><code class="language-js"><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">NavMesh</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./navmesh/NavMesh.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">Polygon</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./navmesh/Polygon.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">DebugVisualizer</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./debug/DebugVisualizer.js&quot;</span><span class="hl-1">;</span><br/><span class="hl-7">import</span><span class="hl-1"> { </span><span class="hl-0">Pathfinder</span><span class="hl-1"> } </span><span class="hl-7">from</span><span class="hl-1"> </span><span class="hl-3">&quot;./pathfinding/Pathfinder.js&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-8">// 1) Crie o NavMesh</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">navMesh</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">NavMesh</span><span class="hl-1">(</span><span class="hl-6">true</span><span class="hl-1">); </span><span class="hl-8">// enableLogs = true (opcional)</span><br/><br/><span class="hl-8">// 2) Registre camadas (opcional)</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">registerLayer</span><span class="hl-1">(</span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1">, { </span><span class="hl-0">color:</span><span class="hl-1"> </span><span class="hl-3">&quot;#ff00ff&quot;</span><span class="hl-1">, </span><span class="hl-0">traversalCost:</span><span class="hl-1"> </span><span class="hl-4">2</span><span class="hl-1"> });</span><br/><br/><span class="hl-8">// 3) Adicione alguns polígonos</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">poly1</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">Polygon</span><span class="hl-1">([</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">100</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">100</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">80</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">10</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">80</span><span class="hl-1"> }</span><br/><span class="hl-1">], { </span><span class="hl-0">layer:</span><span class="hl-1"> </span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1"> });</span><br/><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">addPolygon</span><span class="hl-1">(</span><span class="hl-0">poly1</span><span class="hl-1">);</span><br/><br/><span class="hl-8">// 4) Construa o grafo (sem obstáculos inicialmente)</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">buildGraph</span><span class="hl-1">();</span><br/><br/><span class="hl-8">// 5) Exemplo: Encontrar caminho entre 2 pontos</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">pathResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph:</span><span class="hl-1"> </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">12</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">12</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">90</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">70</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;A*&quot;</span><br/><span class="hl-1">});</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-2">log</span><span class="hl-1">(</span><span class="hl-3">&quot;Path:&quot;</span><span class="hl-1">, </span><span class="hl-0">pathResult</span><span class="hl-1">.</span><span class="hl-0">path</span><span class="hl-1">, </span><span class="hl-3">&quot;Distance:&quot;</span><span class="hl-1">, </span><span class="hl-0">pathResult</span><span class="hl-1">.</span><span class="hl-0">distance</span><span class="hl-1">);</span><br/><br/><span class="hl-8">// 6) Visualizar no canvas</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">canvas</span><span class="hl-1"> = </span><span class="hl-0">document</span><span class="hl-1">.</span><span class="hl-2">getElementById</span><span class="hl-1">(</span><span class="hl-3">&quot;myCanvas&quot;</span><span class="hl-1">);</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">ctx</span><span class="hl-1"> = </span><span class="hl-0">canvas</span><span class="hl-1">.</span><span class="hl-2">getContext</span><span class="hl-1">(</span><span class="hl-3">&quot;2d&quot;</span><span class="hl-1">);</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">debug</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">DebugVisualizer</span><span class="hl-1">(</span><span class="hl-0">ctx</span><span class="hl-1">, </span><span class="hl-0">navMesh</span><span class="hl-1">, {</span><br/><span class="hl-1">  </span><span class="hl-0">showNodes:</span><span class="hl-1"> </span><span class="hl-6">true</span><br/><span class="hl-1">});</span><br/><span class="hl-0">debug</span><span class="hl-1">.</span><span class="hl-2">draw</span><span class="hl-1">(); </span><span class="hl-8">// Desenha tudo (polígonos, arestas, etc.)</span>
 </code><button>Copy</button></pre>
-<p>Nesse exemplo, adicionamos um polígono simples, construímos o grafo e buscamos o caminho via A*. Depois, utilizamos o <code>DebugVisualizer</code> para desenhar tudo em tela.</p>
-<hr>
-<a id="md:uso-avançado" class="tsd-anchor"></a><h2><a href="#md:uso-avançado"><strong>Uso Avançado</strong></a></h2><a id="md:61-obstáculos-dinâmicos" class="tsd-anchor"></a><h3><a href="#md:61-obstáculos-dinâmicos">6.1 <strong>Obstáculos Dinâmicos</strong></a></h3><p>Para adicionar obstáculos em tempo real:</p>
-<pre><code class="language-js"><span class="hl-8">// 1) Habilitar o gerenciador de obstáculos</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">enableDynamicObstacles</span><span class="hl-1">();</span><br/><br/><span class="hl-8">// 2) Criar um polígono representando obstáculo</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">obstaclePoly</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">Polygon</span><span class="hl-1">([</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1"> }</span><br/><span class="hl-1">]);</span><br/><br/><span class="hl-8">// 3) Adicionar ao gerenciador</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">obstacleId</span><span class="hl-1"> = </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">dynamicObstacleManager</span><span class="hl-1">.</span><span class="hl-2">addObstacle</span><span class="hl-1">(</span><span class="hl-0">obstaclePoly</span><span class="hl-1">);</span>
+          <p>
+            Nesse exemplo, adicionamos um polígono simples, construímos o grafo
+            e buscamos o caminho via A*. Depois, utilizamos o
+            <code>DebugVisualizer</code> para desenhar tudo em tela.
+          </p>
+          <hr />
+          <a id="md:uso-avançado" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:uso-avançado"><strong>Uso Avançado</strong></a>
+          </h2>
+          <a id="md:61-obstáculos-dinâmicos" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:61-obstáculos-dinâmicos"
+              >6.1 <strong>Obstáculos Dinâmicos</strong></a
+            >
+          </h3>
+          <p>Para adicionar obstáculos em tempo real:</p>
+          <pre><code class="language-js"><span class="hl-8">// 1) Habilitar o gerenciador de obstáculos</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-2">enableDynamicObstacles</span><span class="hl-1">();</span><br/><br/><span class="hl-8">// 2) Criar um polígono representando obstáculo</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">obstaclePoly</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-2">Polygon</span><span class="hl-1">([</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1"> },</span><br/><span class="hl-1">  { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">50</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">60</span><span class="hl-1"> }</span><br/><span class="hl-1">]);</span><br/><br/><span class="hl-8">// 3) Adicionar ao gerenciador</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">obstacleId</span><span class="hl-1"> = </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">dynamicObstacleManager</span><span class="hl-1">.</span><span class="hl-2">addObstacle</span><span class="hl-1">(</span><span class="hl-0">obstaclePoly</span><span class="hl-1">);</span>
 </code><button>Copy</button></pre>
-<p>O grafo será <strong>automaticamente atualizado</strong> (caso <code>autoUpdate</code> esteja habilitado), removendo arestas bloqueadas pelo obstáculo.</p>
-<a id="md:62-layersystem-filtros" class="tsd-anchor"></a><h3><a href="#md:62-layersystem-filtros">6.2 <strong>LayerSystem Filtros</strong></a></h3><pre><code class="language-js"><span class="hl-8">// Exemplo de filtro de exclusão</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">addFilter</span><span class="hl-1">(</span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1">, </span><span class="hl-3">&quot;exclude&quot;</span><span class="hl-1">, (</span><span class="hl-0">node</span><span class="hl-1">, </span><span class="hl-0">context</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-8">// Exclui polígonos se...</span><br/><span class="hl-1">  </span><span class="hl-7">return</span><span class="hl-1"> </span><span class="hl-0">node</span><span class="hl-1">.</span><span class="hl-0">polygon</span><span class="hl-1">.</span><span class="hl-2">getWidth</span><span class="hl-1">() &lt; </span><span class="hl-4">20</span><span class="hl-1">;</span><br/><span class="hl-1">});</span>
+          <p>
+            O grafo será <strong>automaticamente atualizado</strong> (caso
+            <code>autoUpdate</code> esteja habilitado), removendo arestas
+            bloqueadas pelo obstáculo.
+          </p>
+          <a id="md:62-layersystem-filtros" class="tsd-anchor"></a>
+          <h3>
+            <a href="#md:62-layersystem-filtros"
+              >6.2 <strong>LayerSystem Filtros</strong></a
+            >
+          </h3>
+          <pre><code class="language-js"><span class="hl-8">// Exemplo de filtro de exclusão</span><br/><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">layerSystem</span><span class="hl-1">.</span><span class="hl-2">addFilter</span><span class="hl-1">(</span><span class="hl-3">&quot;customLayer&quot;</span><span class="hl-1">, </span><span class="hl-3">&quot;exclude&quot;</span><span class="hl-1">, (</span><span class="hl-0">node</span><span class="hl-1">, </span><span class="hl-0">context</span><span class="hl-1">) </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-8">// Exclui polígonos se...</span><br/><span class="hl-1">  </span><span class="hl-7">return</span><span class="hl-1"> </span><span class="hl-0">node</span><span class="hl-1">.</span><span class="hl-0">polygon</span><span class="hl-1">.</span><span class="hl-2">getWidth</span><span class="hl-1">() &lt; </span><span class="hl-4">20</span><span class="hl-1">;</span><br/><span class="hl-1">});</span>
 </code><button>Copy</button></pre>
-<a id="md:63-múltiplos-algoritmos-de-pathfinding" class="tsd-anchor"></a><h3><a href="#md:63-múltiplos-algoritmos-de-pathfinding">6.3 <strong>Múltiplos algoritmos de Pathfinding</strong></a></h3><pre><code class="language-js"><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">dijkstraResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph:</span><span class="hl-1"> </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">20</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">20</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;DIJKSTRA&quot;</span><br/><span class="hl-1">});</span>
+          <a
+            id="md:63-múltiplos-algoritmos-de-pathfinding"
+            class="tsd-anchor"
+          ></a>
+          <h3>
+            <a href="#md:63-múltiplos-algoritmos-de-pathfinding"
+              >6.3 <strong>Múltiplos algoritmos de Pathfinding</strong></a
+            >
+          </h3>
+          <pre><code class="language-js"><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-5">dijkstraResult</span><span class="hl-1"> = </span><span class="hl-0">Pathfinder</span><span class="hl-1">.</span><span class="hl-2">findPath</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">graph:</span><span class="hl-1"> </span><span class="hl-0">navMesh</span><span class="hl-1">.</span><span class="hl-0">graph</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">start:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">20</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">20</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">end:</span><span class="hl-1"> { </span><span class="hl-0">x:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1">, </span><span class="hl-0">y:</span><span class="hl-1"> </span><span class="hl-4">300</span><span class="hl-1"> },</span><br/><span class="hl-1">  </span><span class="hl-0">method:</span><span class="hl-1"> </span><span class="hl-3">&quot;DIJKSTRA&quot;</span><br/><span class="hl-1">});</span>
 </code><button>Copy</button></pre>
-<hr>
-<a id="md:api-detalhada" class="tsd-anchor"></a><h2><a href="#md:api-detalhada"><strong>API Detalhada</strong></a></h2><p>A seguir, listamos as classes e métodos-chave (já documentados no código-fonte):</p>
-<ol>
-<li><p><strong><code>NavMesh</code></strong>  </p>
-<ul>
-<li><code>addPolygon(poly: Polygon)</code>: Adiciona polígono.  </li>
-<li><code>buildGraph()</code>: Constrói grafo simples.  </li>
-<li><code>buildGraphConsideringObstacles(obstacles: Polygon[])</code>: Constrói grafo levando em conta bloqueios.  </li>
-<li><code>enableDynamicObstacles(options?)</code>: Inicializa o gerenciador de obstáculos.  </li>
-<li><code>cloneGraph()</code>: Retorna cópia do grafo atual.  </li>
-<li>...</li>
-</ul>
-</li>
-<li><p><strong><code>Polygon</code></strong>  </p>
-<ul>
-<li><code>new Polygon(vertices, options?)</code>: Cria polígono.  </li>
-<li><code>getBoundingBox()</code>, <code>getEdges()</code>, <code>getCenter()</code>, <code>getWidth()</code>.  </li>
-<li><code>containsPoint(point)</code>.  </li>
-<li>...</li>
-</ul>
-</li>
-<li><p><strong><code>DynamicObstacleManager</code></strong>  </p>
-<ul>
-<li><code>addObstacle(obstacle: Polygon)</code>, <code>removeObstacle(id: string)</code>, <code>updateObstacle(id: string, newObstacle: Polygon)</code>.  </li>
-<li>Mantém índice espacial via <code>SpatialGrid</code>.</li>
-</ul>
-</li>
-<li><p><strong><code>LayerSystem</code></strong>  </p>
-<ul>
-<li><code>registerLayer(name: string, config: Object)</code>.  </li>
-<li><code>addFilter(layer: string, type: string, condition: Function, scope?)</code>.  </li>
-<li><code>applyFilters(nodes: any[], context?)</code>.</li>
-</ul>
-</li>
-<li><p><strong><code>Graph</code></strong>  </p>
-<ul>
-<li><code>nodes: {id, polygon}[]</code>.  </li>
-<li><code>adjList: Map&lt;nodeId, Array&lt;{nodeId, peso}&gt;&gt;</code>.  </li>
-<li><code>getAdjacencias(nodeId)</code>, <code>getNode(nodeId)</code>, <code>clone()</code>.</li>
-</ul>
-</li>
-<li><p><strong><code>Pathfinder</code></strong>  </p>
-<ul>
-<li><code>findPath(config)</code>: Principal método, aceita <code>A_STAR</code>, <code>DIJKSTRA</code>, <code>BFS</code>, <code>DFS</code>.  </li>
-<li>Diversos callbacks de customização (heuristic, costFunction, validator).</li>
-</ul>
-</li>
-<li><p><strong><code>DebugVisualizer</code></strong>  </p>
-<ul>
-<li><code>draw()</code>, <code>toggle(enabled)</code>, <code>captureDebugData()</code>.  </li>
-<li><code>highlightAccessibleAreas(profile)</code>, <code>drawAllAgentPaths()</code>, etc.</li>
-</ul>
-</li>
-</ol>
-<hr>
-<a id="md:boas-práticas-e-dicas" class="tsd-anchor"></a><h2><a href="#md:boas-práticas-e-dicas"><strong>Boas Práticas e Dicas</strong></a></h2><ol>
-<li><strong>Valide sempre seus polígonos</strong>: verifique se não há interseções indesejadas ou vértices desalinhados.  </li>
-<li><strong>Use camadas com cautela</strong>: As camadas podem aumentar a complexidade, então utilize filtros somente quando necessário.  </li>
-<li><strong>Otimize o Pathfinding</strong>: Se possível, defina uma boa <code>heuristic</code> para o A* e uma <code>costFunction</code> coerente com o custo real de travessia do seu ambiente.  </li>
-<li><strong>Obstáculos Dinâmicos</strong>: Gerenciar muitos obstáculos pode impactar o desempenho. Se tiver muitos, considere otimizar o <code>cellSize</code> do <code>SpatialGrid</code>.  </li>
-<li><strong>DebugVisualizer</strong>: Em produção, você pode desativar (<code>toggle(false)</code>) para economizar recursos de desenho.  </li>
-<li><strong>Agentes</strong>: Se estiver usando <code>AgentManager</code>, mantenha cada agente com perfil de camada e custo condizentes com seu tipo (por exemplo, “veículo grande” vs. “humano”).</li>
-</ol>
-<hr>
-<a id="md:conclusão" class="tsd-anchor"></a><h2><a href="#md:conclusão"><strong>Conclusão</strong></a></h2><p>Esta biblioteca oferece um <strong>ecossistema completo</strong> para lidar com navegação em 2D. Desde a fase de <strong>desenho</strong> e <strong>construção</strong> de polígonos, passando por <strong>camadas</strong> e <strong>filtros</strong>, até a <strong>busca de caminhos</strong> com algoritmos clássicos, você tem um toolkit robusto para construir jogos, simulações, ou qualquer sistema que exija pathfinding e gestão de obstáculos.</p>
-<p>Para mais exemplos e detalhes internos, consulte o código-fonte já totalmente documentado. Experimente e explore as diversas combinações que a <strong>NavMesh</strong> + <strong>Pathfinder</strong> + <strong>DynamicObstacleManager</strong> e <strong>DebugVisualizer</strong> podem oferecer ao seu projeto.</p>
-<p>Boas criações!</p>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-index-accordion"><summary class="tsd-accordion-summary"><h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="assets/icons.svg#icon-chevronDown"></use></svg>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><h4 class="uppercase">Member Visibility</h4><form><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-private" name="private"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Private</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></form></div><div class="tsd-theme-toggle"><h4 class="uppercase">Theme</h4><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-index-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="assets/icons.svg#icon-chevronDown"></use></svg>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#md:guia-completo-da-biblioteca-de-navegação-e-pathfinding"><span>Guia <wbr/>Completo da <wbr/>Biblioteca de <wbr/>Navegação e <wbr/>Pathfinding</span></a><ul><li><a href="#md:índice"><span>Índice</span></a></li><li><a href="#md:proposta-geral-da-biblioteca"><span>Proposta <wbr/>Geral da <wbr/>Biblioteca</span></a></li><li><a href="#md:principais-recursos-features"><span>Principais <wbr/>Recursos (<wbr/>Features)</span></a></li><li><a href="#md:conceitos-fundamentais"><span>Conceitos <wbr/>Fundamentais</span></a></li><li><ul><li><a href="#md:31-polygons"><span>3.1 <wbr/>Polygons</span></a></li><li><a href="#md:32-navmesh-e-dynamicobstaclemanager"><span>3.2 <wbr/>Nav<wbr/>Mesh e <wbr/>Dynamic<wbr/>Obstacle<wbr/>Manager</span></a></li><li><a href="#md:33-graph"><span>3.3 <wbr/>Graph</span></a></li><li><a href="#md:34-layersystem"><span>3.4 <wbr/>Layer<wbr/>System</span></a></li><li><a href="#md:35-pathfinder"><span>3.5 <wbr/>Pathfinder</span></a></li><li><a href="#md:36-debugvisualizer"><span>3.6 <wbr/>Debug<wbr/>Visualizer</span></a></li></ul></li><li><a href="#md:instalação-e-estrutura-de-pastas"><span>Instalação e <wbr/>Estrutura de <wbr/>Pastas</span></a></li><li><a href="#md:41-instalação"><span>4.1 <wbr/>Instalação</span></a></li><li><a href="#md:exemplo-rápido-quick-start"><span>Exemplo <wbr/>Rápido (<wbr/>Quick <wbr/>Start)</span></a></li><li><a href="#md:uso-avançado"><span>Uso <wbr/>Avançado</span></a></li><li><ul><li><a href="#md:61-obstáculos-dinâmicos"><span>6.1 <wbr/>Obstáculos <wbr/>Dinâmicos</span></a></li><li><a href="#md:62-layersystem-filtros"><span>6.2 <wbr/>Layer<wbr/>System <wbr/>Filtros</span></a></li><li><a href="#md:63-múltiplos-algoritmos-de-pathfinding"><span>6.3 <wbr/>Múltiplos algoritmos de <wbr/>Pathfinding</span></a></li></ul></li><li><a href="#md:api-detalhada"><span>API <wbr/>Detalhada</span></a></li><li><a href="#md:boas-práticas-e-dicas"><span>Boas <wbr/>Práticas e <wbr/>Dicas</span></a></li><li><a href="#md:conclusão"><span>Conclusão</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="assets/icons.svg#icon-1"></use></svg><span>mesh-pilot</span></a><ul class="tsd-small-nested-navigation" id="tsd-nav-container" data-base="."><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+          <hr />
+          <a id="md:api-detalhada" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:api-detalhada"><strong>API Detalhada</strong></a>
+          </h2>
+          <p>
+            A seguir, listamos as classes e métodos-chave (já documentados no
+            código-fonte):
+          </p>
+          <ol>
+            <li>
+              <p>
+                <strong><code>NavMesh</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>addPolygon(poly: Polygon)</code>: Adiciona polígono.
+                </li>
+                <li><code>buildGraph()</code>: Constrói grafo simples.</li>
+                <li>
+                  <code
+                    >buildGraphConsideringObstacles(obstacles: Polygon[])</code
+                  >: Constrói grafo levando em conta bloqueios.
+                </li>
+                <li>
+                  <code>enableDynamicObstacles(options?)</code>: Inicializa o
+                  gerenciador de obstáculos.
+                </li>
+                <li>
+                  <code>cloneGraph()</code>: Retorna cópia do grafo atual.
+                </li>
+                <li>...</li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>Polygon</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>new Polygon(vertices, options?)</code>: Cria polígono.
+                </li>
+                <li>
+                  <code>getBoundingBox()</code>, <code>getEdges()</code>,
+                  <code>getCenter()</code>, <code>getWidth()</code>.
+                </li>
+                <li><code>containsPoint(point)</code>.</li>
+                <li>...</li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>DynamicObstacleManager</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>addObstacle(obstacle: Polygon)</code>,
+                  <code>removeObstacle(id: string)</code>,
+                  <code>updateObstacle(id: string, newObstacle: Polygon)</code>.
+                </li>
+                <li>Mantém índice espacial via <code>SpatialGrid</code>.</li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>LayerSystem</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>registerLayer(name: string, config: Object)</code>.
+                </li>
+                <li>
+                  <code
+                    >addFilter(layer: string, type: string, condition: Function,
+                    scope?)</code
+                  >.
+                </li>
+                <li><code>applyFilters(nodes: any[], context?)</code>.</li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>Graph</code></strong>
+              </p>
+              <ul>
+                <li><code>nodes: {id, polygon}[]</code>.</li>
+                <li>
+                  <code
+                    >adjList: Map&lt;nodeId, Array&lt;{nodeId,
+                    peso}&gt;&gt;</code
+                  >.
+                </li>
+                <li>
+                  <code>getAdjacencias(nodeId)</code>,
+                  <code>getNode(nodeId)</code>, <code>clone()</code>.
+                </li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>Pathfinder</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>findPath(config)</code>: Principal método, aceita
+                  <code>A_STAR</code>, <code>DIJKSTRA</code>, <code>BFS</code>,
+                  <code>DFS</code>.
+                </li>
+                <li>
+                  Diversos callbacks de customização (heuristic, costFunction,
+                  validator).
+                </li>
+              </ul>
+            </li>
+            <li>
+              <p>
+                <strong><code>DebugVisualizer</code></strong>
+              </p>
+              <ul>
+                <li>
+                  <code>draw()</code>, <code>toggle(enabled)</code>,
+                  <code>captureDebugData()</code>.
+                </li>
+                <li>
+                  <code>highlightAccessibleAreas(profile)</code>,
+                  <code>drawAllAgentPaths()</code>, etc.
+                </li>
+              </ul>
+            </li>
+          </ol>
+          <hr />
+          <a id="md:boas-práticas-e-dicas" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:boas-práticas-e-dicas"
+              ><strong>Boas Práticas e Dicas</strong></a
+            >
+          </h2>
+          <ol>
+            <li>
+              <strong>Valide sempre seus polígonos</strong>: verifique se não há
+              interseções indesejadas ou vértices desalinhados.
+            </li>
+            <li>
+              <strong>Use camadas com cautela</strong>: As camadas podem
+              aumentar a complexidade, então utilize filtros somente quando
+              necessário.
+            </li>
+            <li>
+              <strong>Otimize o Pathfinding</strong>: Se possível, defina uma
+              boa <code>heuristic</code> para o A* e uma
+              <code>costFunction</code> coerente com o custo real de travessia
+              do seu ambiente.
+            </li>
+            <li>
+              <strong>Obstáculos Dinâmicos</strong>: Gerenciar muitos obstáculos
+              pode impactar o desempenho. Se tiver muitos, considere otimizar o
+              <code>cellSize</code> do <code>SpatialGrid</code>.
+            </li>
+            <li>
+              <strong>DebugVisualizer</strong>: Em produção, você pode desativar
+              (<code>toggle(false)</code>) para economizar recursos de desenho.
+            </li>
+            <li>
+              <strong>Agentes</strong>: Se estiver usando
+              <code>AgentManager</code>, mantenha cada agente com perfil de
+              camada e custo condizentes com seu tipo (por exemplo, “veículo
+              grande” vs. “humano”).
+            </li>
+          </ol>
+          <hr />
+          <a id="md:conclusão" class="tsd-anchor"></a>
+          <h2>
+            <a href="#md:conclusão"><strong>Conclusão</strong></a>
+          </h2>
+          <p>
+            Esta biblioteca oferece um
+            <strong>ecossistema completo</strong> para lidar com navegação em
+            2D. Desde a fase de <strong>desenho</strong> e
+            <strong>construção</strong> de polígonos, passando por
+            <strong>camadas</strong> e <strong>filtros</strong>, até a
+            <strong>busca de caminhos</strong> com algoritmos clássicos, você
+            tem um toolkit robusto para construir jogos, simulações, ou qualquer
+            sistema que exija pathfinding e gestão de obstáculos.
+          </p>
+          <p>
+            Para mais exemplos e detalhes internos, consulte o código-fonte já
+            totalmente documentado. Experimente e explore as diversas
+            combinações que a <strong>NavMesh</strong> +
+            <strong>Pathfinder</strong> +
+            <strong>DynamicObstacleManager</strong> e
+            <strong>DebugVisualizer</strong> podem oferecer ao seu projeto.
+          </p>
+          <p>Boas criações!</p>
+        </div>
+      </div>
+      <div class="col-sidebar">
+        <div class="page-menu">
+          <div class="tsd-navigation settings">
+            <details class="tsd-index-accordion">
+              <summary class="tsd-accordion-summary">
+                <h3>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <use href="assets/icons.svg#icon-chevronDown"></use></svg
+                  >Settings
+                </h3>
+              </summary>
+              <div class="tsd-accordion-details">
+                <div class="tsd-filter-visibility">
+                  <h4 class="uppercase">Member Visibility</h4>
+                  <form>
+                    <ul id="tsd-filter-options">
+                      <li class="tsd-filter-item">
+                        <label class="tsd-filter-input"
+                          ><input
+                            type="checkbox"
+                            id="tsd-filter-protected"
+                            name="protected"
+                          /><svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              class="tsd-checkbox-background"
+                              width="30"
+                              height="30"
+                              x="1"
+                              y="1"
+                              rx="6"
+                              fill="none"
+                            ></rect>
+                            <path
+                              class="tsd-checkbox-checkmark"
+                              d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                              stroke="none"
+                              stroke-width="3.5"
+                              stroke-linejoin="round"
+                              fill="none"
+                            ></path></svg
+                          ><span>Protected</span></label
+                        >
+                      </li>
+                      <li class="tsd-filter-item">
+                        <label class="tsd-filter-input"
+                          ><input
+                            type="checkbox"
+                            id="tsd-filter-private"
+                            name="private"
+                          /><svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              class="tsd-checkbox-background"
+                              width="30"
+                              height="30"
+                              x="1"
+                              y="1"
+                              rx="6"
+                              fill="none"
+                            ></rect>
+                            <path
+                              class="tsd-checkbox-checkmark"
+                              d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                              stroke="none"
+                              stroke-width="3.5"
+                              stroke-linejoin="round"
+                              fill="none"
+                            ></path></svg
+                          ><span>Private</span></label
+                        >
+                      </li>
+                      <li class="tsd-filter-item">
+                        <label class="tsd-filter-input"
+                          ><input
+                            type="checkbox"
+                            id="tsd-filter-inherited"
+                            name="inherited"
+                            checked
+                          /><svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              class="tsd-checkbox-background"
+                              width="30"
+                              height="30"
+                              x="1"
+                              y="1"
+                              rx="6"
+                              fill="none"
+                            ></rect>
+                            <path
+                              class="tsd-checkbox-checkmark"
+                              d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                              stroke="none"
+                              stroke-width="3.5"
+                              stroke-linejoin="round"
+                              fill="none"
+                            ></path></svg
+                          ><span>Inherited</span></label
+                        >
+                      </li>
+                      <li class="tsd-filter-item">
+                        <label class="tsd-filter-input"
+                          ><input
+                            type="checkbox"
+                            id="tsd-filter-external"
+                            name="external"
+                          /><svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            aria-hidden="true"
+                          >
+                            <rect
+                              class="tsd-checkbox-background"
+                              width="30"
+                              height="30"
+                              x="1"
+                              y="1"
+                              rx="6"
+                              fill="none"
+                            ></rect>
+                            <path
+                              class="tsd-checkbox-checkmark"
+                              d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                              stroke="none"
+                              stroke-width="3.5"
+                              stroke-linejoin="round"
+                              fill="none"
+                            ></path></svg
+                          ><span>External</span></label
+                        >
+                      </li>
+                    </ul>
+                  </form>
+                </div>
+                <div class="tsd-theme-toggle">
+                  <h4 class="uppercase">Theme</h4>
+                  <select id="tsd-theme">
+                    <option value="os">OS</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+              </div>
+            </details>
+          </div>
+          <details open class="tsd-index-accordion tsd-page-navigation">
+            <summary class="tsd-accordion-summary">
+              <h3>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <use href="assets/icons.svg#icon-chevronDown"></use></svg
+                >On This Page
+              </h3>
+            </summary>
+            <div class="tsd-accordion-details">
+              <a
+                href="#md:guia-completo-da-biblioteca-de-navegação-e-pathfinding"
+                ><span
+                  >Guia <wbr />Completo da <wbr />Biblioteca de <wbr />Navegação
+                  e <wbr />Pathfinding</span
+                ></a
+              >
+              <ul>
+                <li>
+                  <a href="#md:índice"><span>Índice</span></a>
+                </li>
+                <li>
+                  <a href="#md:proposta-geral-da-biblioteca"
+                    ><span>Proposta <wbr />Geral da <wbr />Biblioteca</span></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:principais-recursos-features"
+                    ><span
+                      >Principais <wbr />Recursos (<wbr />Features)</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:conceitos-fundamentais"
+                    ><span>Conceitos <wbr />Fundamentais</span></a
+                  >
+                </li>
+                <li>
+                  <ul>
+                    <li>
+                      <a href="#md:31-polygons"
+                        ><span>3.1 <wbr />Polygons</span></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:32-navmesh-e-dynamicobstaclemanager"
+                        ><span
+                          >3.2 <wbr />Nav<wbr />Mesh e
+                          <wbr />Dynamic<wbr />Obstacle<wbr />Manager</span
+                        ></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:33-graph"
+                        ><span>3.3 <wbr />Graph</span></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:34-layersystem"
+                        ><span>3.4 <wbr />Layer<wbr />System</span></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:35-pathfinder"
+                        ><span>3.5 <wbr />Pathfinder</span></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:36-debugvisualizer"
+                        ><span>3.6 <wbr />Debug<wbr />Visualizer</span></a
+                      >
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#md:instalação-e-estrutura-de-pastas"
+                    ><span
+                      >Instalação e <wbr />Estrutura de <wbr />Pastas</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:41-instalação"
+                    ><span>4.1 <wbr />Instalação</span></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:exemplo-rápido-quick-start"
+                    ><span
+                      >Exemplo <wbr />Rápido (<wbr />Quick <wbr />Start)</span
+                    ></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:uso-avançado"
+                    ><span>Uso <wbr />Avançado</span></a
+                  >
+                </li>
+                <li>
+                  <ul>
+                    <li>
+                      <a href="#md:61-obstáculos-dinâmicos"
+                        ><span>6.1 <wbr />Obstáculos <wbr />Dinâmicos</span></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:62-layersystem-filtros"
+                        ><span
+                          >6.2 <wbr />Layer<wbr />System <wbr />Filtros</span
+                        ></a
+                      >
+                    </li>
+                    <li>
+                      <a href="#md:63-múltiplos-algoritmos-de-pathfinding"
+                        ><span
+                          >6.3 <wbr />Múltiplos algoritmos de
+                          <wbr />Pathfinding</span
+                        ></a
+                      >
+                    </li>
+                  </ul>
+                </li>
+                <li>
+                  <a href="#md:api-detalhada"
+                    ><span>API <wbr />Detalhada</span></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:boas-práticas-e-dicas"
+                    ><span>Boas <wbr />Práticas e <wbr />Dicas</span></a
+                  >
+                </li>
+                <li>
+                  <a href="#md:conclusão"><span>Conclusão</span></a>
+                </li>
+              </ul>
+            </div>
+          </details>
+        </div>
+        <div class="site-menu">
+          <nav class="tsd-navigation">
+            <a href="modules.html" class="current"
+              ><svg class="tsd-kind-icon" viewBox="0 0 24 24">
+                <use href="assets/icons.svg#icon-1"></use></svg
+              ><span>mesh-pilot</span></a
+            >
+            <ul
+              class="tsd-small-nested-navigation"
+              id="tsd-nav-container"
+              data-base="."
+            >
+              <li>Loading...</li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <p class="tsd-generator">
+        Generated using
+        <a href="https://typedoc.org/" target="_blank">TypeDoc</a>
+      </p>
+    </footer>
+    <div class="overlay"></div>
+  </body>
+</html>
