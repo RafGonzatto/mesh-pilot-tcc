@@ -16,7 +16,9 @@
   "types": "./dist/mesh-pilot.d.ts",
   "dependencies": {
     "path-browserify": "^1.0.1",
-    "url": "^0.11.4"
+    "pathfinding": "^0.4.18",
+    "url": "^0.11.4",
+    "yuka": "^0.7.8"
   },
   "babel": {
     "presets": [
@@ -51,7 +53,8 @@
     "docs": "typedoc",
     "prepare": "npm run build:js",
     "pretest": "npm run build:js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "plan": "node scripts/execPlan.js"
   },
   "files": [
     "dist/",
